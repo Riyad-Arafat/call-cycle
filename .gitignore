@@ -12,3 +12,12 @@ web-build/
 
 # macOS
 .DS_Store
+
+
+# envs
+.env
+.env.dev
+.env.prod
+.yarn.lock
+package-lock.json
+.vscode

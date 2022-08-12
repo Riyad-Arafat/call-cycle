@@ -1,5 +1,4 @@
 import { StyleSheet, ScrollView, View } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import React from "react";
 import { useIsFocused } from "@react-navigation/native";
 import { RootTabScreenProps } from "../typings/types";
@@ -7,23 +6,27 @@ import ContactsGroupe, {
   ContactsGroupeProps,
 } from "../components/CntactsGroupe";
 import { getContactsGroups } from "../apis";
+import Loading from "../components/Loading";
 
 export default function GroupsScreen({
   navigation,
 }: RootTabScreenProps<"Groups">) {
   const isFocused = useIsFocused();
-
+  const [loading, setLoading] = React.useState(true);
   const [checked, setChecked] = React.useState<
     ContactsGroupeProps["groups"] | []
   >([]);
 
   const getData = async () => {
+    setLoading(true);
     try {
       const data = await getContactsGroups();
       setChecked(data);
     } catch (e) {
       // error reading value
       console.log(e);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -33,6 +36,8 @@ export default function GroupsScreen({
       getData();
     }
   }, [isFocused]);
+
+  if (loading) return <Loading />;
 
   return (
     <View style={styles.container}>

@@ -10,7 +10,7 @@ import {
   Text,
 } from "react-native-paper";
 import { Contact } from "../../screens/HomeScreen";
-import { ContactsItems } from "../ContactsList";
+import { ContactsList } from "../ContactsList";
 import RNImmediatePhoneCall from "react-native-immediate-phone-call";
 import { deleteGroup, updateGroup } from "../../apis";
 import AddModal from "../../screens/AddModal";
@@ -30,6 +30,10 @@ const ContactsGroupe = ({ groups = [], reFetch }: ContactsGroupeProps) => {
   const appState = useRef(AppState.currentState);
   const [appStateVisible, setAppStateVisible] = useState(appState.current);
   const [is_cycling, setIsCycling] = useState(false);
+  const [checked, setChecked] = React.useState<
+    ContactsGroupeProps["groups"] | []
+  >([]);
+
   const wait = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -121,7 +125,7 @@ const ContactsGroupe = ({ groups = [], reFetch }: ContactsGroupeProps) => {
                     reFetch={reFetch}
                   />
                 </View>
-                <ContactsItems
+                <ContactsList
                   contacts={group.contacts}
                   allowSelect={false}
                   porpuse="call"

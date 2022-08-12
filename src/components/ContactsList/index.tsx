@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, useEffect, useState } from "react";
 import {
   Avatar,
   List,
@@ -12,7 +12,12 @@ import {
 } from "react-native-paper";
 import { Contact } from "../../screens/HomeScreen";
 import RNImmediatePhoneCall from "react-native-immediate-phone-call";
-import { View } from "react-native";
+import { FlatList, View } from "react-native";
+import {
+  SpeedyList,
+  SpeedyListItemMeta,
+  SpeedyListItemRenderer,
+} from "react-native-speedy-list";
 
 interface ContactItemsProps {
   contacts: Contact[];
@@ -50,87 +55,171 @@ const Call = ({
   );
 };
 
-export const ContactsItems = ({
-  contacts,
-  allowSelect,
-  onSelect,
-  checked,
+export const ContactsList = memo(
+  ({
+    contacts,
+    allowSelect,
+    onSelect,
+    checked,
+    porpuse,
+    is_cycling,
+  }: ContactItemsProps) => {
+    const [newChecked, setNewChecked] = React.useState<Contact[]>([]);
+    const [loading, setLoading] = React.useState(false);
+    // remove contact from group if it exists in the array
+    const removeContact = async (contact: Contact) => {
+      // remove item from checked array if it exists in the array
+      const newChecked =
+        contacts?.filter((c) => {
+          if (c.phoneNumbers && contact.phoneNumbers)
+            return c.id !== contact.id;
+          return false;
+        }) || [];
+      onSelect?.(newChecked);
+    };
+
+    useEffect(() => {
+      if (!loading) setLoading(true);
+      if (checked) {
+        setNewChecked(checked);
+      }
+      if (!loading) setLoading(false);
+    }, [checked]);
+
+    const handleSelect = (values: Contact[]) => {
+      setTimeout(async () => {
+        setNewChecked(values);
+        onSelect?.(values);
+      }, 0);
+    };
+
+    const renderItem = ({ item }) => (
+      <ListItem
+        // key={contact.id + "-" + idx}
+        contact={item}
+        allowSelect={allowSelect}
+        checked_contacts={newChecked}
+        porpuse={porpuse}
+        removeContact={removeContact}
+        disabled={is_cycling}
+        onSelect={handleSelect}
+      />
+    );
+
+    return (
+      <>
+        {contacts.map((contact, idx) => (
+          <ListItem
+            key={contact.id + "-" + idx}
+            contact={contact}
+            allowSelect={allowSelect}
+            checked_contacts={newChecked}
+            porpuse={porpuse}
+            removeContact={removeContact}
+            disabled={is_cycling}
+            onSelect={handleSelect}
+          />
+        ))}
+      </>
+    );
+  }
+);
+const ListItem = ({
+  contact,
+  disabled,
+  removeContact,
   porpuse,
-  is_cycling,
-}: ContactItemsProps) => {
-  const isChecked = (contact: Contact) => {
-    return checked?.find((c) => {
+  allowSelect,
+  checked_contacts,
+  onSelect,
+}: {
+  contact: Contact;
+  checked_contacts: Contact[];
+  disabled: boolean;
+  removeContact: (contact: Contact) => void;
+  porpuse: "call" | "select";
+  allowSelect: boolean;
+  onSelect?: (contact: Contact[]) => void;
+}) => {
+  const [isChecked_cont, setIsChecked] = useState(false);
+  const [newChecked, setNewChecked] = React.useState<Contact[]>([]);
+
+  const isChecked = async (contact: Contact): Promise<boolean> => {
+    let con = checked_contacts?.find((c) => {
       if (c.phoneNumbers && contact.phoneNumbers)
         return c.phoneNumbers[0].number === contact.phoneNumbers[0].number;
       return false;
     });
+
+    return new Promise((resolve) => {
+      resolve(!!con);
+    });
   };
-  const handleCheck = (item: Contact) => {
-    let newChecked: Contact[] = [];
-    if (!isChecked(item)) {
-      newChecked = [...(checked || []), item];
-    } else {
-      // remove item from checked array if it exists in the array
-      newChecked =
-        checked?.filter((c) => {
-          if (c.phoneNumbers && item.phoneNumbers)
-            return c.phoneNumbers[0].number === item.phoneNumbers[0].number;
-          return false;
-        }) || [];
-    }
-    onSelect?.(newChecked);
+  const handleCheck = async (): Promise<{ data: Contact[] }> => {
+    return new Promise(async (resolve) => {
+      let newChecked: Contact[] = [];
+      if (checked_contacts) {
+        newChecked = [...checked_contacts];
+      }
+
+      if (isChecked_cont) {
+        setIsChecked(false);
+        newChecked = newChecked.filter((c) => {
+          if (c.phoneNumbers && contact.phoneNumbers)
+            return c.phoneNumbers[0].number !== contact.phoneNumbers[0].number;
+          return true;
+        });
+      } else {
+        setIsChecked(true);
+        newChecked.push(contact);
+      }
+      resolve({ data: newChecked });
+    });
   };
 
-  // remove contact from group if it exists in the array
-  const removeContact = (contact: Contact) => {
-    // remove item from checked array if it exists in the array
-    const newChecked =
-      contacts?.filter((c) => {
-        if (c.phoneNumbers && contact.phoneNumbers) return c.id !== contact.id;
-        return false;
-      }) || [];
-    onSelect?.(newChecked);
+  const onPress = async () => {
+    let { data } = await handleCheck();
+    console.log("checked_contacts", data.length);
+
+    onSelect?.(data);
   };
+
+  useEffect(() => {
+    (async () => {
+      if (checked_contacts && allowSelect) {
+        await isChecked(contact).then((res) => {
+          setIsChecked(!!res);
+        });
+      }
+    })();
+  }, [checked_contacts]);
 
   return (
-    <>
-      {contacts.map((contact, idx) => {
-        return (
-          <List.Item
-            key={`${contact.id}-${idx}`}
-            title={contact.name}
-            description={
-              contact.phoneNumbers ? contact.phoneNumbers[0]?.number : ""
-            }
-            left={() => (
-              <Avatar.Text
-                size={40}
-                label={contact.name.charAt(0).toUpperCase()}
-              />
-            )}
-            right={() =>
-              porpuse === "call" ? (
-                <>
-                  <Call contact={contact} disabled={is_cycling} />
-                  <DeleteContact
-                    contact={contact}
-                    disabled={is_cycling}
-                    onPress={() => removeContact(contact)}
-                  />
-                </>
-              ) : allowSelect ? (
-                <Checkbox
-                  status={isChecked(contact) ? "checked" : "unchecked"}
-                  onPress={() => {
-                    handleCheck(contact);
-                  }}
-                />
-              ) : null
-            }
+    <List.Item
+      title={contact.name}
+      description={contact.phoneNumbers ? contact.phoneNumbers[0]?.number : ""}
+      onPress={onPress}
+      left={() => (
+        <Avatar.Text size={40} label={contact.name.charAt(0).toUpperCase()} />
+      )}
+      right={() =>
+        porpuse === "call" ? (
+          <>
+            <Call contact={contact} disabled={disabled} />
+            <DeleteContact
+              contact={contact}
+              disabled={disabled}
+              onPress={() => removeContact(contact)}
+            />
+          </>
+        ) : allowSelect ? (
+          <Checkbox
+            status={isChecked_cont ? "checked" : "unchecked"}
+            onPress={onPress}
           />
-        );
-      })}
-    </>
+        ) : null
+      }
+    />
   );
 };
 

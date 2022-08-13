@@ -80,5 +80,6 @@ buck-out/
 .expo/
 web-build/
 dist/
+/*.pwd
 
 # @end expo-cli

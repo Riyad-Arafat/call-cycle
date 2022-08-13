@@ -1,13 +1,14 @@
 import * as React from "react";
-import { ScrollView } from "react-native";
+import { ScrollView, StatusBar } from "react-native";
 import { Modal, Portal, Button, Colors, TextInput } from "react-native-paper";
 import { ContactsList } from "../components/ContactsList";
-import { Contact, removeDuplicatesPhone } from "./HomeScreen";
+import { Contact, removeDuplicatesPhone, search_fun } from "./HomeScreen";
 import * as Contacts from "expo-contacts";
 import { GroupProps } from "../components/CntactsGroupe";
 import { getGroupById, updateGroup } from "../apis";
 import Loading from "../components/Loading";
-// import { theme } from "../../App";
+import Searchbar from "../components/Searchbar";
+import { useGlobal } from "../context/Global";
 
 export const AddModal = ({
   group,
@@ -24,31 +25,35 @@ export const AddModal = ({
   const [initialContacts, setInitialContacts] = React.useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = React.useState<Contact[]>([]);
   const [text, setText] = React.useState(group.name);
+  const { search_value, handel_search_value } = useGlobal();
+  const [search_result, setsearch_result] = React.useState<Contact[]>([]);
 
   const showModal = () => setVisible(true);
   const hideModal = () => {
     setVisible(false);
     setSelectedContact([]);
     setInitialContacts([]);
+    handel_search_value("");
+    setLoading(false);
   };
   const onSelect = (contacts: Contact[]) => {
     setSelectedContact(contacts);
   };
 
   const updateContacts = async () => {
-    if (!!selectedContact)
-      try {
-        const data = await updateGroup(group.id, {
-          id: group.id,
-          name: text,
-          contacts: selectedContact,
-        });
-        onUpdate?.(data);
-      } catch (e) {
-        console.log(e);
-      } finally {
-        hideModal();
-      }
+    if (!!selectedContact) setLoading(true);
+    try {
+      const data = await updateGroup(group.id, {
+        id: group.id,
+        name: text,
+        contacts: selectedContact,
+      });
+      onUpdate?.(data);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      hideModal();
+    }
   };
 
   const getCheckedContacts = async () => {
@@ -60,25 +65,28 @@ export const AddModal = ({
     }
   };
 
+  const importContects = async () => {
+    const { status } = await Contacts.requestPermissionsAsync();
+    if (status === "granted") {
+      const { data } = await Contacts.getContactsAsync({
+        fields: [
+          Contacts.Fields.FirstName,
+          Contacts.Fields.LastName,
+          Contacts.Fields.PhoneNumbers,
+        ],
+      });
+
+      if (data.length > 0) {
+        let { data: vals } = await removeDuplicatesPhone(data);
+        setContacts(vals);
+      }
+    }
+  };
+
   const prepareState = React.useCallback(async () => {
     if (visible) {
       setLoading(true);
-      const { status } = await Contacts.requestPermissionsAsync();
-      if (status === "granted") {
-        const { data } = await Contacts.getContactsAsync({
-          fields: [
-            Contacts.Fields.FirstName,
-            Contacts.Fields.LastName,
-            Contacts.Fields.PhoneNumbers,
-          ],
-        });
-
-        if (data.length > 0) {
-          let { data: vals } = await removeDuplicatesPhone(data);
-          setContacts(vals);
-        }
-      }
-
+      await importContects();
       await getCheckedContacts();
 
       setLoading(false);
@@ -90,6 +98,11 @@ export const AddModal = ({
     prepareState();
   }, [prepareState]);
 
+  React.useEffect(() => {
+    if (!!search_value) {
+      setsearch_result(search_fun(search_value, contacts));
+    } else setsearch_result(contacts);
+  }, [search_value]);
   return (
     <>
       <Portal>
@@ -97,7 +110,7 @@ export const AddModal = ({
           visible={visible}
           onDismiss={hideModal}
           contentContainerStyle={{
-            paddingTop: 50,
+            paddingVertical: StatusBar.currentHeight,
             paddingBottom: 40,
             backgroundColor: "white",
             minHeight: "100%",
@@ -109,10 +122,12 @@ export const AddModal = ({
                 label="Group name"
                 value={group.name}
                 onChangeText={(text) => setText(text)}
+                style={{ marginBottom: 5 }}
               />
+              <Searchbar />
               <ScrollView>
                 <ContactsList
-                  contacts={contacts}
+                  contacts={!!search_value ? search_result : contacts}
                   checked={initialContacts}
                   allowSelect
                   onSelect={onSelect}

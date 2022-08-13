@@ -5,9 +5,9 @@ import { DefaultTheme, Provider as PaperProvider } from "react-native-paper";
 import useCachedResources from "./src/hooks/useCachedResources";
 import useColorScheme from "./src/hooks/useColorScheme";
 import Navigation from "./src/navigation";
-import Entypo from "@expo/vector-icons/Entypo";
 import * as SplashScreen from "expo-splash-screen";
-import * as Font from "expo-font";
+import { PermissionsAndroid, StatusBar as nativeBar } from "react-native";
+import GlobalProvider from "./src/context/Global";
 
 export const theme: ReactNativePaper.Theme & {
   [key: string]: any;
@@ -28,15 +28,39 @@ export default function App() {
   const isLoadingComplete = useCachedResources();
   const colorScheme = useColorScheme();
 
+  const callPerm = async () => {
+    await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.CALL_PHONE,
+      {
+        title: "Contacts",
+        message: "This app would like to view your contacts.",
+        buttonPositive: "OK",
+        buttonNeutral: "Cancel",
+        buttonNegative: "Deny",
+      }
+    );
+  };
+
+  React.useEffect(() => {
+    callPerm();
+  }, []);
+
   if (!isLoadingComplete) {
     return null;
   } else {
     return (
-      <SafeAreaProvider>
-        <PaperProvider theme={theme}>
-          <Navigation colorScheme={colorScheme} />
-        </PaperProvider>
-        <StatusBar />
+      <SafeAreaProvider
+        focusable
+        style={{
+          marginTop: nativeBar.currentHeight,
+        }}
+      >
+        <GlobalProvider>
+          <PaperProvider theme={theme}>
+            <Navigation colorScheme={colorScheme} />
+          </PaperProvider>
+          <StatusBar backgroundColor="black" />
+        </GlobalProvider>
       </SafeAreaProvider>
     );
   }

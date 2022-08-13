@@ -126,24 +126,25 @@ export const ContactsList = memo(
       }
     }, [allowSelect, porpuse]);
 
-    return (
-      <>
-        {contacts.map((contact, idx) => (
-          // <RenderItem key={contact.id + "-" + idx} contact={contact} />
+    if (contacts.length > 0)
+      return (
+        <>
+          {contacts.map((contact, idx) => (
+            // <RenderItem key={contact.id + "-" + idx} contact={contact} />
 
-          <ListItem
-            key={contact.id + "-" + idx}
-            contact={contact}
-            allowSelect={allowSelect}
-            porpuse={porpuse}
-            removeContact={removeContact}
-            disabled={is_cycling}
-            onPress={handleCheck}
-            isChecked={isChecked(contact, checked_contacts)}
-          />
-        ))}
-      </>
-    );
+            <ListItem
+              key={contact.id + "-" + idx}
+              contact={contact}
+              allowSelect={allowSelect}
+              porpuse={porpuse}
+              removeContact={removeContact}
+              disabled={is_cycling}
+              onPress={handleCheck}
+              isChecked={isChecked(contact, checked_contacts)}
+            />
+          ))}
+        </>
+      );
   }
 );
 const ListItem = memo(

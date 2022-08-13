@@ -5,6 +5,9 @@ import { DefaultTheme, Provider as PaperProvider } from "react-native-paper";
 import useCachedResources from "./src/hooks/useCachedResources";
 import useColorScheme from "./src/hooks/useColorScheme";
 import Navigation from "./src/navigation";
+import Entypo from "@expo/vector-icons/Entypo";
+import * as SplashScreen from "expo-splash-screen";
+import * as Font from "expo-font";
 
 export const theme: ReactNativePaper.Theme & {
   [key: string]: any;
@@ -19,6 +22,8 @@ export const theme: ReactNativePaper.Theme & {
   },
 };
 
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
 export default function App() {
   const isLoadingComplete = useCachedResources();
   const colorScheme = useColorScheme();

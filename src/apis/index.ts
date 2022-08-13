@@ -33,20 +33,22 @@ export const getGroupById = async (
 export const updateGroup = async (
   id: string,
   group: GroupProps
-): Promise<boolean> => {
+): Promise<GroupProps | undefined> => {
   try {
     const groupes = await getContactsGroups();
     const index = groupes.findIndex((g) => g.id === id);
+
     if (index !== -1) {
       groupes[index] = group;
       await AsyncStorage.setItem("@groupes", JSON.stringify(groupes));
-      return true;
+      return group;
     }
-    return false;
+    return undefined;
   } catch (e) {
+    console.log(e);
     // error reading value
   }
-  return false;
+  return undefined;
 };
 
 // delete group from storage by id

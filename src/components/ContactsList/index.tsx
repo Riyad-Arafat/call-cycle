@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useState } from "react";
+import React, { memo, useCallback, useEffect, useState } from "react";
 import {
   Avatar,
   List,
@@ -13,11 +13,6 @@ import {
 import { Contact } from "../../screens/HomeScreen";
 import RNImmediatePhoneCall from "react-native-immediate-phone-call";
 import { FlatList, View } from "react-native";
-import {
-  SpeedyList,
-  SpeedyListItemMeta,
-  SpeedyListItemRenderer,
-} from "react-native-speedy-list";
 
 interface ContactItemsProps {
   contacts: Contact[];
@@ -61,167 +56,160 @@ export const ContactsList = memo(
     allowSelect,
     onSelect,
     checked,
-    porpuse,
+    porpuse = "select",
     is_cycling,
   }: ContactItemsProps) => {
-    const [newChecked, setNewChecked] = React.useState<Contact[]>([]);
+    const [checked_contacts, set_checked_contacts] = React.useState<Contact[]>(
+      []
+    );
     const [loading, setLoading] = React.useState(false);
     // remove contact from group if it exists in the array
-    const removeContact = async (contact: Contact) => {
+    const removeContact = (contact: Contact) => {
       // remove item from checked array if it exists in the array
-      const newChecked =
-        contacts?.filter((c) => {
+
+      let newChecked = [...contacts];
+      if (isChecked(contact, newChecked))
+        newChecked = newChecked.filter((c) => {
           if (c.phoneNumbers && contact.phoneNumbers)
-            return c.id !== contact.id;
-          return false;
-        }) || [];
+            return c.phoneNumbers[0].number !== contact.phoneNumbers[0].number;
+          return true;
+        });
+
       onSelect?.(newChecked);
     };
 
     useEffect(() => {
       if (!loading) setLoading(true);
       if (checked) {
-        setNewChecked(checked);
+        set_checked_contacts(checked);
       }
       if (!loading) setLoading(false);
-    }, [checked]);
+    }, []);
 
-    const handleSelect = (values: Contact[]) => {
-      setTimeout(async () => {
-        setNewChecked(values);
-        onSelect?.(values);
-      }, 0);
+    const isChecked = (contact: Contact, contacts: Contact[]) => {
+      let con = contacts.find((c) => {
+        if (c.phoneNumbers && contact.phoneNumbers)
+          return c.phoneNumbers[0].number === contact.phoneNumbers[0].number;
+        return false;
+      });
+      return !!con;
     };
 
-    const renderItem = ({ item }) => (
-      <ListItem
-        // key={contact.id + "-" + idx}
-        contact={item}
-        allowSelect={allowSelect}
-        checked_contacts={newChecked}
-        porpuse={porpuse}
-        removeContact={removeContact}
-        disabled={is_cycling}
-        onSelect={handleSelect}
-      />
-    );
+    const handleCheck = (contact: Contact) => {
+      set_checked_contacts((prev) => {
+        let newChecked = [...prev];
+        if (isChecked(contact, newChecked))
+          newChecked = newChecked.filter((c) => {
+            if (c.phoneNumbers && contact.phoneNumbers)
+              return (
+                c.phoneNumbers[0].number !== contact.phoneNumbers[0].number
+              );
+            return true;
+          });
+        else newChecked = [...newChecked, contact];
+        return newChecked;
+      });
+    };
+
+    const submit = useCallback(() => {
+      if (checked_contacts.length > 0) onSelect?.(checked_contacts);
+    }, [checked_contacts]);
+
+    useEffect(() => {
+      submit();
+    }),
+      [submit];
+
+    useEffect(() => {
+      if (!allowSelect && porpuse === "select") {
+        set_checked_contacts([]);
+      }
+    }, [allowSelect, porpuse]);
 
     return (
       <>
         {contacts.map((contact, idx) => (
+          // <RenderItem key={contact.id + "-" + idx} contact={contact} />
+
           <ListItem
             key={contact.id + "-" + idx}
             contact={contact}
             allowSelect={allowSelect}
-            checked_contacts={newChecked}
             porpuse={porpuse}
             removeContact={removeContact}
             disabled={is_cycling}
-            onSelect={handleSelect}
+            onPress={handleCheck}
+            isChecked={isChecked(contact, checked_contacts)}
           />
         ))}
       </>
     );
   }
 );
-const ListItem = ({
-  contact,
-  disabled,
-  removeContact,
-  porpuse,
-  allowSelect,
-  checked_contacts,
-  onSelect,
-}: {
-  contact: Contact;
-  checked_contacts: Contact[];
-  disabled: boolean;
-  removeContact: (contact: Contact) => void;
-  porpuse: "call" | "select";
-  allowSelect: boolean;
-  onSelect?: (contact: Contact[]) => void;
-}) => {
-  const [isChecked_cont, setIsChecked] = useState(false);
-  const [newChecked, setNewChecked] = React.useState<Contact[]>([]);
+const ListItem = memo(
+  ({
+    contact,
+    disabled,
+    removeContact,
+    porpuse,
+    allowSelect,
+    onPress,
+    isChecked,
+  }: {
+    contact: Contact;
+    disabled: boolean;
+    isChecked: boolean;
+    removeContact: (contact: Contact) => void;
+    porpuse: "call" | "select";
+    allowSelect: boolean;
+    onPress?: (contact: Contact) => void;
+  }) => {
+    const handelOnPress = () => {
+      if (porpuse === "select" && allowSelect) onPress?.(contact);
+    };
 
-  const isChecked = async (contact: Contact): Promise<boolean> => {
-    let con = checked_contacts?.find((c) => {
-      if (c.phoneNumbers && contact.phoneNumbers)
-        return c.phoneNumbers[0].number === contact.phoneNumbers[0].number;
-      return false;
-    });
-
-    return new Promise((resolve) => {
-      resolve(!!con);
-    });
-  };
-  const handleCheck = async (): Promise<{ data: Contact[] }> => {
-    return new Promise(async (resolve) => {
-      let newChecked: Contact[] = [];
-      if (checked_contacts) {
-        newChecked = [...checked_contacts];
-      }
-
-      if (isChecked_cont) {
-        setIsChecked(false);
-        newChecked = newChecked.filter((c) => {
-          if (c.phoneNumbers && contact.phoneNumbers)
-            return c.phoneNumbers[0].number !== contact.phoneNumbers[0].number;
-          return true;
-        });
-      } else {
-        setIsChecked(true);
-        newChecked.push(contact);
-      }
-      resolve({ data: newChecked });
-    });
-  };
-
-  const onPress = async () => {
-    let { data } = await handleCheck();
-    console.log("checked_contacts", data.length);
-
-    onSelect?.(data);
-  };
-
-  useEffect(() => {
-    (async () => {
-      if (checked_contacts && allowSelect) {
-        await isChecked(contact).then((res) => {
-          setIsChecked(!!res);
-        });
-      }
-    })();
-  }, [checked_contacts]);
-
-  return (
-    <List.Item
-      title={contact.name}
-      description={contact.phoneNumbers ? contact.phoneNumbers[0]?.number : ""}
-      onPress={onPress}
-      left={() => (
-        <Avatar.Text size={40} label={contact.name.charAt(0).toUpperCase()} />
-      )}
-      right={() =>
-        porpuse === "call" ? (
-          <>
-            <Call contact={contact} disabled={disabled} />
-            <DeleteContact
-              contact={contact}
-              disabled={disabled}
-              onPress={() => removeContact(contact)}
+    return (
+      <List.Item
+        title={contact.name}
+        description={
+          contact.phoneNumbers ? contact.phoneNumbers[0]?.number : ""
+        }
+        onPress={handelOnPress}
+        left={() => (
+          <Avatar.Text size={40} label={contact.name.charAt(0).toUpperCase()} />
+        )}
+        right={() =>
+          porpuse === "call" ? (
+            <>
+              <Call contact={contact} disabled={disabled} />
+              <DeleteContact
+                contact={contact}
+                disabled={disabled}
+                onPress={() => removeContact(contact)}
+              />
+            </>
+          ) : allowSelect ? (
+            <Checkbox
+              status={!!isChecked ? "checked" : "unchecked"}
+              onPress={handelOnPress}
             />
-          </>
-        ) : allowSelect ? (
-          <Checkbox
-            status={isChecked_cont ? "checked" : "unchecked"}
-            onPress={onPress}
-          />
-        ) : null
-      }
-    />
-  );
-};
+          ) : null
+        }
+      />
+    );
+  },
+  (prevProps, nextProps) => {
+    let render = prevProps.isChecked === nextProps.isChecked;
+
+    let change = () => {
+      if (prevProps.allowSelect !== nextProps.allowSelect) return true;
+      if (prevProps.isChecked !== nextProps.isChecked) return true;
+
+      return false;
+    };
+    return !change();
+  }
+);
 
 const DeleteContact = ({
   disabled,

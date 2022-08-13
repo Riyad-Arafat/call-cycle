@@ -17,10 +17,9 @@ export default function HomeScreen({
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selection, setSelection] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [selectedContact, setSelectedContact] = useState<Contact[] | null>(
+  const [selectedContacts, setSelectedContacts] = useState<Contact[] | null>(
     null
   );
-
   const isFocused = useIsFocused();
 
   const allowSelection = () => {
@@ -32,12 +31,12 @@ export default function HomeScreen({
   };
 
   const storeData = async (name: string) => {
-    if (!!selectedContact)
+    if (!!selectedContacts)
       try {
         // get the value from storage
-        await setContactsGroups(name, selectedContact);
+        await setContactsGroups(name, selectedContacts);
         setSelection(false);
-        setSelectedContact([]);
+        onSelect([]);
       } catch (e) {
         // saving error
         console.log(e);
@@ -45,7 +44,7 @@ export default function HomeScreen({
   };
 
   const onSelect = async (values: Contact[]) => {
-    setSelectedContact(values);
+    setSelectedContacts(values);
   };
 
   React.useEffect(() => {
@@ -79,7 +78,7 @@ export default function HomeScreen({
       <ScrollView style={styles.contactsView}>
         <ContactsList
           contacts={contacts}
-          checked={selectedContact || undefined}
+          checked={undefined}
           allowSelect={selection}
           onSelect={onSelect}
           is_cycling={false}
@@ -89,7 +88,7 @@ export default function HomeScreen({
         onAdd={allowSelection}
         onSave={storeData}
         isSlector={selection}
-        selectedLength={selectedContact?.length || 0}
+        selectedLength={selectedContacts?.length || 0}
         onCancel={onCancel}
       />
     </View>

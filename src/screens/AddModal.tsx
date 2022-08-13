@@ -11,23 +11,26 @@ import Loading from "../components/Loading";
 
 export const AddModal = ({
   group,
-  reFetch,
+  onUpdate,
   disabled,
 }: {
   group: GroupProps;
-  reFetch?: () => void;
+  onUpdate?: (data: GroupProps) => void;
   disabled: boolean;
 }) => {
   const [visible, setVisible] = React.useState(false);
-
+  const [loading, setLoading] = React.useState(false);
   const [contacts, setContacts] = React.useState<Contact[]>([]);
-  const [selectedContact, setSelectedContact] = React.useState<Contact[] | []>(
-    []
-  );
+  const [initialContacts, setInitialContacts] = React.useState<Contact[]>([]);
+  const [selectedContact, setSelectedContact] = React.useState<Contact[]>([]);
   const [text, setText] = React.useState(group.name);
 
   const showModal = () => setVisible(true);
-  const hideModal = () => setVisible(false);
+  const hideModal = () => {
+    setVisible(false);
+    setSelectedContact([]);
+    setInitialContacts([]);
+  };
   const onSelect = (contacts: Contact[]) => {
     setSelectedContact(contacts);
   };
@@ -35,51 +38,57 @@ export const AddModal = ({
   const updateContacts = async () => {
     if (!!selectedContact)
       try {
-        await updateGroup(group.id, {
+        const data = await updateGroup(group.id, {
           id: group.id,
           name: text,
           contacts: selectedContact,
         });
+        onUpdate?.(data);
       } catch (e) {
         console.log(e);
       } finally {
         hideModal();
-        reFetch?.();
       }
   };
 
   const getCheckedContacts = async () => {
     try {
       const data = await getGroupById(group.id);
-      if (data) setSelectedContact(data.contacts);
+      if (data) setInitialContacts(data.contacts);
     } catch (error) {
       console.log(error);
     }
   };
 
-  React.useEffect(() => {
-    // Call only when screen open or when back on screen
-    if (!!visible) {
-      (async () => {
-        const { status } = await Contacts.requestPermissionsAsync();
-        if (status === "granted") {
-          const { data } = await Contacts.getContactsAsync({
-            fields: [
-              Contacts.Fields.FirstName,
-              Contacts.Fields.LastName,
-              Contacts.Fields.PhoneNumbers,
-            ],
-          });
+  const prepareState = React.useCallback(async () => {
+    if (visible) {
+      setLoading(true);
+      const { status } = await Contacts.requestPermissionsAsync();
+      if (status === "granted") {
+        const { data } = await Contacts.getContactsAsync({
+          fields: [
+            Contacts.Fields.FirstName,
+            Contacts.Fields.LastName,
+            Contacts.Fields.PhoneNumbers,
+          ],
+        });
 
-          if (data.length > 0) {
-            let { data: vals } = await removeDuplicatesPhone(data);
-            setContacts(vals);
-          }
+        if (data.length > 0) {
+          let { data: vals } = await removeDuplicatesPhone(data);
+          setContacts(vals);
         }
-      })();
-      getCheckedContacts();
+      }
+
+      await getCheckedContacts();
+
+      setLoading(false);
     }
   }, [visible]);
+
+  React.useEffect(() => {
+    // Call only when screen open or when back on screen
+    prepareState();
+  }, [prepareState]);
 
   return (
     <>
@@ -94,7 +103,7 @@ export const AddModal = ({
             minHeight: "100%",
           }}
         >
-          {contacts.length > 0 ? (
+          {!loading ? (
             <>
               <TextInput
                 label="Group name"
@@ -104,7 +113,7 @@ export const AddModal = ({
               <ScrollView>
                 <ContactsList
                   contacts={contacts}
-                  checked={selectedContact}
+                  checked={initialContacts}
                   allowSelect
                   onSelect={onSelect}
                   is_cycling={false}

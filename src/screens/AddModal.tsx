@@ -2,8 +2,7 @@ import * as React from "react";
 import { ScrollView, StatusBar } from "react-native";
 import { Modal, Portal, Button, Colors, TextInput } from "react-native-paper";
 import { ContactsList } from "../components/ContactsList";
-import { Contact, removeDuplicatesPhone, search_fun } from "./HomeScreen";
-import * as Contacts from "expo-contacts";
+import { Contact, search_fun } from "./HomeScreen";
 import { GroupProps } from "../components/CntactsGroupe";
 import { getGroupById, updateGroup } from "../apis";
 import Loading from "../components/Loading";
@@ -21,12 +20,12 @@ export const AddModal = ({
 }) => {
   const [visible, setVisible] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
-  const [contacts, setContacts] = React.useState<Contact[]>([]);
   const [initialContacts, setInitialContacts] = React.useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = React.useState<Contact[]>([]);
   const [text, setText] = React.useState(group.name);
   const { search_value, handel_search_value } = useGlobal();
   const [search_result, setsearch_result] = React.useState<Contact[]>([]);
+  const { contacts } = useGlobal();
 
   const showModal = () => setVisible(true);
   const hideModal = () => {
@@ -65,30 +64,10 @@ export const AddModal = ({
     }
   };
 
-  const importContects = async () => {
-    const { status } = await Contacts.requestPermissionsAsync();
-    if (status === "granted") {
-      const { data } = await Contacts.getContactsAsync({
-        fields: [
-          Contacts.Fields.FirstName,
-          Contacts.Fields.LastName,
-          Contacts.Fields.PhoneNumbers,
-        ],
-      });
-
-      if (data.length > 0) {
-        let { data: vals } = await removeDuplicatesPhone(data);
-        setContacts(vals);
-      }
-    }
-  };
-
   const prepareState = React.useCallback(async () => {
     if (visible) {
       setLoading(true);
-      await importContects();
       await getCheckedContacts();
-
       setLoading(false);
     }
   }, [visible]);

@@ -6,7 +6,7 @@ import useCachedResources from "./src/hooks/useCachedResources";
 import useColorScheme from "./src/hooks/useColorScheme";
 import Navigation from "./src/navigation";
 import * as SplashScreen from "expo-splash-screen";
-import { PermissionsAndroid, StatusBar as nativeBar } from "react-native";
+import { StatusBar as nativeBar } from "react-native";
 import GlobalProvider from "./src/context/Global";
 
 export const theme: ReactNativePaper.Theme & {
@@ -27,23 +27,6 @@ SplashScreen.preventAutoHideAsync();
 export default function App() {
   const isLoadingComplete = useCachedResources();
   const colorScheme = useColorScheme();
-
-  const callPerm = async () => {
-    await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.CALL_PHONE,
-      {
-        title: "Contacts",
-        message: "This app would like to view your contacts.",
-        buttonPositive: "OK",
-        buttonNeutral: "Cancel",
-        buttonNegative: "Deny",
-      }
-    );
-  };
-
-  React.useEffect(() => {
-    callPerm();
-  }, []);
 
   if (!isLoadingComplete) {
     return null;

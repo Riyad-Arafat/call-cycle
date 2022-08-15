@@ -1,12 +1,11 @@
-import { PermissionsAndroid, ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { RootTabScreenProps } from "../typings/types";
-import React, { useState } from "react";
+import React from "react";
 import { ContactsList } from "../components/ContactsList";
 import ModaleScreen from "./ModalScreen";
 
 import * as Contacts from "expo-contacts";
 import { setContactsGroups } from "../apis";
-import { useIsFocused } from "@react-navigation/native";
 import Loading from "../components/Loading";
 import { useGlobal } from "../context/Global";
 
@@ -15,16 +14,13 @@ export type Contact = Contacts.Contact;
 export default function HomeScreen({
   navigation,
 }: RootTabScreenProps<"HomeScreen">) {
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [selection, setSelection] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [selectedContacts, setSelectedContacts] = useState<Contact[] | null>(
-    null
-  );
+  const [selection, setSelection] = React.useState(false);
+  const [selectedContacts, setSelectedContacts] = React.useState<
+    Contact[] | null
+  >(null);
   const { search_value, handel_search_value } = useGlobal();
-  const [search_result, setsearch_result] = useState<Contact[]>([]);
-
-  const isFocused = useIsFocused();
+  const [search_result, setsearch_result] = React.useState<Contact[]>([]);
+  const { contacts } = useGlobal();
 
   const allowSelection = () => {
     setSelection(true);
@@ -52,40 +48,13 @@ export default function HomeScreen({
     setSelectedContacts(values);
   };
 
-  const importContects = async () => {
-    setLoading(true);
-    const { status } = await Contacts.requestPermissionsAsync();
-    if (status === "granted") {
-      const { data } = await Contacts.getContactsAsync({
-        fields: [
-          Contacts.Fields.FirstName,
-          Contacts.Fields.LastName,
-          Contacts.Fields.PhoneNumbers,
-        ],
-      });
-
-      if (data.length > 0) {
-        let { data: vals } = await removeDuplicatesPhone(data);
-        setContacts(vals);
-      }
-    }
-
-    if (loading) setLoading(false);
-  };
-
-  React.useEffect(() => {
-    if (isFocused) {
-      importContects();
-    }
-  }, [isFocused]);
-
   React.useEffect(() => {
     if (!!search_value) {
       setsearch_result(search_fun(search_value, contacts));
     } else setsearch_result(contacts);
   }, [search_value]);
 
-  if (loading) return <Loading />;
+  if (contacts.length === 0) return <Loading />;
 
   return (
     <View style={styles.container}>

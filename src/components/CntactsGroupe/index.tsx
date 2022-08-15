@@ -46,7 +46,7 @@ const ContactsGroupe = memo(
               contact.phoneNumbers[0].number
             );
             // wait until the app is in the foreground
-            await wait(3500);
+            await wait(5000);
             // await wait until call is finished
             while (appStateVisible !== "active") {
               await wait(2000);

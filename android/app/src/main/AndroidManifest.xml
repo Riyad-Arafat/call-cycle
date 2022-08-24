@@ -32,6 +32,7 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="call-cycle"/>
         <data android:scheme="com.riyadelberkawy.callcycle"/>
+        <data android:scheme="exp+call-cycle"/>
       </intent-filter>
     </activity>
     <activity android:name="com.facebook.react.devsupport.DevSettingsActivity" android:exported="false"/>

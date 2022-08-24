@@ -37,7 +37,6 @@ export const updateGroup = async (
   try {
     const groupes = await getContactsGroups();
     const index = groupes.findIndex((g) => g.id === id);
-
     if (index !== -1) {
       groupes[index] = group;
       await AsyncStorage.setItem("@groupes", JSON.stringify(groupes));

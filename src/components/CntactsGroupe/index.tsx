@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState, memo } from "react";
-import { View, AppState } from "react-native";
+import React, { useState, memo } from "react";
+import { View } from "react-native";
 import {
   Avatar,
   Button,
@@ -9,11 +9,10 @@ import {
   Portal,
   Text,
 } from "react-native-paper";
-import { Contact } from "../../screens/HomeScreen";
+import { Contact } from "../../typings/types";
 import { ContactsList } from "../ContactsList";
-import RNImmediatePhoneCall from "react-native-immediate-phone-call";
-import { deleteGroup, updateGroup } from "../../apis";
 import AddModal from "../../screens/AddModal";
+import { useGlobal } from "../../context/Global";
 
 export interface GroupProps {
   id: string;
@@ -21,145 +20,97 @@ export interface GroupProps {
   contacts: Contact[];
 }
 
-export interface ContactsGroupeProps {
-  groups: GroupProps[];
-  onUpdate?: (data: GroupProps) => void;
-  onDelet?: (group_id: string) => void;
-}
+const ContactsGroupe = memo(() => {
+  const {
+    updateGroup,
+    groupes,
+    startCallCycle: makeCalls,
+    is_cycling,
+  } = useGlobal();
 
-const ContactsGroupe = memo(
-  ({ groups = [], onUpdate, onDelet }: ContactsGroupeProps) => {
-    const appState = useRef(AppState.currentState);
-    const [appStateVisible, setAppStateVisible] = useState(appState.current);
-    const [is_cycling, setIsCycling] = useState(false);
+  const startCallCycle = async (contacts: Contact[]) => {
+    await makeCalls(contacts);
+  };
 
-    const wait = (ms: number) =>
-      new Promise((resolve) => setTimeout(resolve, ms));
+  const onDeleteContact = async (group: GroupProps) => {
+    updateGroup(group);
+  };
 
-    const startCallCycle = async (contacts: Contact[]) => {
-      setIsCycling(true);
-
-      for (const contact of contacts) {
-        try {
-          if (contact.phoneNumbers && !!contact.phoneNumbers[0].number) {
-            RNImmediatePhoneCall.immediatePhoneCall(
-              contact.phoneNumbers[0].number
-            );
-            // wait until the app is in the foreground
-            await wait(5000);
-            // await wait until call is finished
-            while (appStateVisible !== "active") {
-              await wait(2000);
-            }
-          }
-        } catch (error) {
-          console.log(error);
-        }
-      }
-      setIsCycling(false);
-    };
-
-    useEffect(() => {
-      const subscription = AppState.addEventListener(
-        "change",
-        (nextAppState) => {
-          appState.current = nextAppState;
-          setAppStateVisible(appState.current);
-        }
-      );
-      return () => {
-        subscription.remove();
-      };
-    }, []);
-
-    const onDeleteContact = async (group: GroupProps) => {
-      const data = await updateGroup(group.id, {
-        id: group.id,
-        name: group.name,
-        contacts: group.contacts,
-      });
-      onUpdate?.(data);
-    };
-
-    const onDeletGroup = async (group: GroupProps) => {
-      await deleteGroup(group.id);
-      onDelet?.(group.id);
-    };
-
-    return (
-      <List.AccordionGroup>
-        {groups.length > 0 &&
-          groups.map((group, idx) => {
-            return (
-              <List.Accordion
-                expanded={true}
-                key={group.id}
-                id={`${group.name}-${idx}`}
-                title={group.name}
-                left={() => <Avatar.Icon size={40} icon="account-group" />}
-              >
-                <>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-evenly",
-                    }}
+  return (
+    <List.AccordionGroup>
+      {groupes.length > 0 &&
+        groupes.map((group, idx) => {
+          return (
+            <List.Accordion
+              expanded={true}
+              key={group.id}
+              id={`${group.name}-${idx}`}
+              title={group.name}
+              titleStyle={{
+                color: Colors.black,
+                fontSize: 20,
+                fontWeight: "bold",
+              }}
+              left={() => (
+                <Avatar.Icon
+                  size={40}
+                  icon="account-group"
+                  color={Colors.white}
+                  style={{ backgroundColor: Colors.lightBlue900 }}
+                />
+              )}
+            >
+              <>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-evenly",
+                  }}
+                >
+                  <Button
+                    icon={"phone"}
+                    mode="outlined"
+                    disabled={is_cycling}
+                    color={Colors.green500}
+                    onPress={() => startCallCycle(group.contacts)}
                   >
-                    <Button
-                      icon={"phone"}
-                      mode="outlined"
-                      disabled={is_cycling}
-                      color={Colors.green500}
-                      onPress={() => startCallCycle(group.contacts)}
-                    >
-                      <Text>Start</Text>
-                    </Button>
-                    <DeleteGroup
-                      disabled={is_cycling}
-                      onPress={() => onDeletGroup(group)}
-                      group={group}
-                    />
-                    <AddModal
-                      group={group}
-                      disabled={is_cycling}
-                      onUpdate={onUpdate}
-                    />
-                  </View>
-                  <ContactsList
-                    contacts={group.contacts}
-                    allowSelect={false}
-                    porpuse="call"
-                    is_cycling={is_cycling}
-                    onSelect={(checked) =>
-                      onDeleteContact({ ...group, contacts: checked })
-                    }
-                  />
-                </>
-              </List.Accordion>
-            );
-          })}
-      </List.AccordionGroup>
-    );
-  }
-);
+                    <Text>Start</Text>
+                  </Button>
+                  <DeleteGroup disabled={is_cycling} group={group} />
+                  <AddModal group={group} disabled={is_cycling} />
+                </View>
+                <ContactsList
+                  contacts={group.contacts}
+                  allowSelect={false}
+                  porpuse="call"
+                  onSelect={async (checked) =>
+                    await onDeleteContact({ ...group, contacts: checked })
+                  }
+                />
+              </>
+            </List.Accordion>
+          );
+        })}
+    </List.AccordionGroup>
+  );
+});
 
 const DeleteGroup = ({
   disabled,
-  onPress,
   group,
 }: {
   group: GroupProps;
   disabled: boolean;
-  onPress: () => void;
 }) => {
   const [visible, setVisible] = React.useState(false);
+  const { deleteGroup, updateGroup, groupes } = useGlobal();
 
   const showModal = () => setVisible(true);
   const hideModal = () => setVisible(false);
 
   const handleDelete = () => {
+    deleteGroup(group.id);
     hideModal();
-    onPress();
   };
 
   const handleCancel = () => {

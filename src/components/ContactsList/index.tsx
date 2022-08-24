@@ -10,9 +10,10 @@ import {
   Text,
   Button,
 } from "react-native-paper";
-import { Contact } from "../../screens/HomeScreen";
+import { Contact } from "../../typings/types";
 import RNImmediatePhoneCall from "react-native-immediate-phone-call";
-import { FlatList, View } from "react-native";
+import { NativeScrollEvent, ScrollView, View } from "react-native";
+import { useGlobal } from "../../context/Global";
 
 interface ContactItemsProps {
   contacts: Contact[];
@@ -20,9 +21,15 @@ interface ContactItemsProps {
   onSelect?: (contact: Contact[]) => void;
   checked?: Contact[];
   porpuse?: "call" | "select";
-  is_cycling: boolean;
 }
 
+const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }) => {
+  const paddingToBottom = 20;
+  return (
+    layoutMeasurement.height + contentOffset.y >=
+    contentSize.height - paddingToBottom
+  );
+};
 const Call = ({
   contact,
   disabled,
@@ -50,6 +57,23 @@ const Call = ({
   );
 };
 
+const StartSubCycle = ({
+  disabled,
+  onPress,
+}: {
+  disabled: boolean;
+  onPress: () => void;
+}) => {
+  return (
+    <IconButton
+      icon={"arrow-down"}
+      color={Colors.green500}
+      disabled={disabled}
+      onPress={onPress}
+    />
+  );
+};
+
 export const ContactsList = memo(
   ({
     contacts,
@@ -57,16 +81,18 @@ export const ContactsList = memo(
     onSelect,
     checked,
     porpuse = "select",
-    is_cycling,
   }: ContactItemsProps) => {
     const [checked_contacts, set_checked_contacts] = React.useState<Contact[]>(
       []
     );
+    const [rendered_contacts, set_rendered_contacts] = React.useState<
+      Contact[]
+    >([]);
     const [loading, setLoading] = React.useState(false);
+    const { startCallCycle, is_cycling } = useGlobal();
     // remove contact from group if it exists in the array
-    const removeContact = (contact: Contact) => {
+    const removeContact = async (contact: Contact) => {
       // remove item from checked array if it exists in the array
-
       let newChecked = [...contacts];
       if (isChecked(contact, newChecked))
         newChecked = newChecked.filter((c) => {
@@ -116,22 +142,46 @@ export const ContactsList = memo(
     }, [checked_contacts]);
 
     useEffect(() => {
-      submit();
-    }),
-      [submit];
-
-    useEffect(() => {
       if (!allowSelect && porpuse === "select") {
         set_checked_contacts([]);
       }
+      if (!!allowSelect && rendered_contacts.length > 10) {
+        if (contacts.length > 0) set_rendered_contacts(contacts.slice(0, 10));
+      }
     }, [allowSelect, porpuse]);
+
+    useEffect(() => {
+      submit();
+    }, [submit]);
+
+    useEffect(() => {
+      if (contacts.length > 0)
+        set_rendered_contacts(
+          contacts.slice(0, 10).filter((c) => {
+            return isChecked(c, contacts);
+          })
+        );
+    }, [contacts]);
+
+    const handelScroll = (event: NativeScrollEvent) => {
+      if (isCloseToBottom(event)) {
+        if (rendered_contacts.length < contacts.length)
+          set_rendered_contacts((prev) => [
+            ...prev,
+            ...contacts.slice(prev.length, prev.length + 10),
+          ]);
+      }
+    };
 
     if (contacts.length > 0)
       return (
-        <>
-          {contacts.map((contact, idx) => (
-            // <RenderItem key={contact.id + "-" + idx} contact={contact} />
-
+        <ScrollView
+          onScroll={({ nativeEvent }) => {
+            handelScroll(nativeEvent);
+          }}
+          scrollEventThrottle={400}
+        >
+          {rendered_contacts.map((contact, idx) => (
             <ListItem
               key={contact.id + "-" + idx}
               contact={contact}
@@ -141,9 +191,12 @@ export const ContactsList = memo(
               disabled={is_cycling}
               onPress={handleCheck}
               isChecked={isChecked(contact, checked_contacts)}
+              StartSubCycle={() => {
+                startCallCycle(contacts.slice(idx, contacts.length));
+              }}
             />
           ))}
-        </>
+        </ScrollView>
       );
   }
 );
@@ -156,6 +209,7 @@ const ListItem = memo(
     allowSelect,
     onPress,
     isChecked,
+    StartSubCycle: StartSubCycleFun,
   }: {
     contact: Contact;
     disabled: boolean;
@@ -164,6 +218,7 @@ const ListItem = memo(
     porpuse: "call" | "select";
     allowSelect: boolean;
     onPress?: (contact: Contact) => void;
+    StartSubCycle?: () => void;
   }) => {
     const handelOnPress = () => {
       if (porpuse === "select" && allowSelect) onPress?.(contact);
@@ -177,11 +232,22 @@ const ListItem = memo(
         }
         onPress={handelOnPress}
         left={() => (
-          <Avatar.Text size={40} label={contact.name.charAt(0).toUpperCase()} />
+          <Avatar.Text
+            size={40}
+            label={contact.name.charAt(0).toUpperCase()}
+            style={{
+              backgroundColor: Colors.grey600,
+            }}
+          />
         )}
+        titleStyle={{
+          fontSize: 15,
+          fontWeight: "bold",
+        }}
         right={() =>
           porpuse === "call" ? (
             <>
+              <StartSubCycle disabled={disabled} onPress={StartSubCycleFun} />
               <Call contact={contact} disabled={disabled} />
               <DeleteContact
                 contact={contact}
@@ -200,11 +266,15 @@ const ListItem = memo(
     );
   },
   (prevProps, nextProps) => {
-    let render = prevProps.isChecked === nextProps.isChecked;
-
     let change = () => {
       if (prevProps.allowSelect !== nextProps.allowSelect) return true;
       if (prevProps.isChecked !== nextProps.isChecked) return true;
+      if (prevProps.disabled !== nextProps.disabled) return true;
+      if (
+        prevProps.contact.phoneNumbers[0].number !==
+        nextProps.contact.phoneNumbers[0].number
+      )
+        return true;
 
       return false;
     };

@@ -2,7 +2,7 @@
   "expo": {
     "name": "call-cycle",
     "slug": "call-cycle",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./src/assets/images/icon.png",
     "userInterfaceStyle": "light",
@@ -14,7 +14,9 @@
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.riyadelberkawy.callcycle"
@@ -26,12 +28,21 @@
         "foregroundImage": "./src/assets/images/icon.png",
         "backgroundColor": "#000000"
       },
-      "permissions": ["CAMERA_ROLL", "READ_CONTACTS", "CALL_PHONE"],
+      "permissions": [
+        "CAMERA_ROLL",
+        "READ_CONTACTS",
+        "CALL_PHONE"
+      ],
       "package": "com.riyadelberkawy.callcycle"
     },
     "web": {
       "favicon": "./src/assets/images/favicon.png"
     },
-    "scheme": "call-cycle"
+    "scheme": "call-cycle",
+    "extra": {
+      "eas": {
+        "projectId": "311aceb2-afda-4131-ba5b-17c75b918514"
+      }
+    }
   }
 }

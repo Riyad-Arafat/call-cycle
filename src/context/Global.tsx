@@ -7,6 +7,7 @@ import Loading from "../components/Loading";
 import { GroupProps } from "../components/CntactsGroupe";
 import {
   deleteGroup as deleteGroupAPI,
+  setContactsGroups,
   updateGroup as updateGroupAPI,
 } from "../apis";
 import RNImmediatePhoneCall from "react-native-immediate-phone-call";
@@ -18,6 +19,7 @@ interface Props {
   groupes: GroupProps[];
   updateGroup: (group: GroupProps) => void;
   deleteGroup: (group_id: string) => void;
+  addGroup: (name: string, contacts: Contacts.Contact[]) => void;
   setGroupes: (groupes: GroupProps[]) => void;
   startCallCycle: (contacts: Contact[]) => Promise<void>;
   is_cycling: boolean;
@@ -30,6 +32,7 @@ const GlobalContext = React.createContext<Props>({
   handel_search_value: (s) => console.log("s", s),
   updateGroup: async () => console.log("aa"),
   deleteGroup: async () => console.log("ss"),
+  addGroup: () => console.log("ss"),
   setGroupes: () => console.log("ss"),
   startCallCycle: async () => console.log("ss"),
   is_cycling: false,
@@ -49,6 +52,16 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
   const [appStateVisible, setAppStateVisible] = React.useState(
     appState.current
   );
+
+  const addGroup = async (name: string, contacts: Contacts.Contact[]) => {
+    setIsCycling(true);
+    await setContactsGroups(name, contacts).then((group) => {
+      if (group) setGroupes((prev) => [...prev, group]);
+    });
+    setTimeout(() => {
+      setIsCycling(false);
+    }, 1000);
+  };
 
   const updateGroup = async (group: GroupProps) => {
     setIsCycling(true);
@@ -163,6 +176,7 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
         groupes,
         updateGroup,
         deleteGroup,
+        addGroup,
         setGroupes,
         startCallCycle,
         is_cycling,

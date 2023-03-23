@@ -1,18 +1,21 @@
 import * as React from "react";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { DefaultTheme, Provider as PaperProvider } from "react-native-paper";
+import {
+  DefaultTheme,
+  Provider as PaperProvider,
+  ThemeBase,
+} from "react-native-paper";
 import useCachedResources from "./src/hooks/useCachedResources";
-import useColorScheme from "./src/hooks/useColorScheme";
 import Navigation from "./src/navigation";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar as nativeBar } from "react-native";
 import GlobalProvider from "./src/context/Global";
 
-export const theme: ReactNativePaper.Theme & {
+export const theme: ThemeBase & {
   [key: string]: any;
   colors: {
-    [key: string]: string;
+    [key: string]: any;
   };
 } = {
   ...DefaultTheme,
@@ -26,7 +29,6 @@ export const theme: ReactNativePaper.Theme & {
 SplashScreen.preventAutoHideAsync();
 export default function App() {
   const isLoadingComplete = useCachedResources();
-  const colorScheme = useColorScheme();
 
   if (!isLoadingComplete) {
     return null;
@@ -40,7 +42,7 @@ export default function App() {
       >
         <GlobalProvider>
           <PaperProvider theme={theme}>
-            <Navigation colorScheme={colorScheme} />
+            <Navigation />
           </PaperProvider>
           <StatusBar backgroundColor="black" />
         </GlobalProvider>

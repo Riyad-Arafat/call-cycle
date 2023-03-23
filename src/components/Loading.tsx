@@ -1,6 +1,6 @@
 import * as React from "react";
 import { View } from "react-native";
-import { ActivityIndicator, Colors } from "react-native-paper";
+import { ActivityIndicator, MD2Colors as Colors } from "react-native-paper";
 
 export const Loading = () => (
   <View

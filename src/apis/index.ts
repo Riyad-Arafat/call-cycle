@@ -1,14 +1,15 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { ContactsGroupeProps, GroupProps } from "../components/CntactsGroupe";
+import { GroupProps } from "../components/CntactsGroupe";
 import { Contact } from "expo-contacts";
 /// get all contacts groupes from storage
-export const getContactsGroups = async (): Promise<
-  ContactsGroupeProps["groups"] | []
-> => {
-  let data: ContactsGroupeProps["groups"] = [];
+export const getContactsGroups = async (): Promise<GroupProps[]> => {
+  let data: GroupProps[] = [];
   try {
     const currentGroupes = await AsyncStorage.getItem("@groupes");
-    data = currentGroupes != null ? JSON.parse(currentGroupes) : [];
+    data =
+      currentGroupes != null
+        ? JSON.parse(currentGroupes)
+        : ([] as GroupProps[]);
   } catch (e) {
     // error reading value
   }
@@ -22,7 +23,8 @@ export const getGroupById = async (
   let data: GroupProps | undefined = undefined;
   try {
     const groupes = await getContactsGroups();
-    return groupes.find((g) => g.id === id);
+    data = groupes.find((g) => g.id === id);
+    return data;
   } catch (e) {
     // error reading value
   }
@@ -81,7 +83,7 @@ export const setContactsGroups = async (name: string, contacts: Contact[]) => {
     // save the value
     const jsonValue = JSON.stringify(newGroupes);
     await AsyncStorage.setItem("@groupes", jsonValue);
-    return true;
+    return group;
   } catch (e) {
     // saving error
     console.log(e);

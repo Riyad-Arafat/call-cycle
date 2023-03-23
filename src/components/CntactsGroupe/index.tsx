@@ -3,7 +3,7 @@ import { View } from "react-native";
 import {
   Avatar,
   Button,
-  Colors,
+  MD2Colors as Colors,
   List,
   Modal,
   Portal,
@@ -11,8 +11,8 @@ import {
 } from "react-native-paper";
 import { Contact } from "../../typings/types";
 import { ContactsList } from "../ContactsList";
-import AddModal from "../../screens/AddModal";
 import { useGlobal } from "../../context/Global";
+import GroupForm from "@components/Actions/CreateGroup/CreateGroup";
 
 export interface GroupProps {
   id: string;
@@ -21,12 +21,20 @@ export interface GroupProps {
 }
 
 const ContactsGroupe = memo(() => {
-  const {
-    updateGroup,
-    groupes,
-    startCallCycle: makeCalls,
-    is_cycling,
-  } = useGlobal();
+  const { groupes } = useGlobal();
+  return (
+    <List.AccordionGroup>
+      {groupes.length > 0 &&
+        groupes.map((group) => {
+          return <GroupItem group={group} key={group.id} />;
+        })}
+    </List.AccordionGroup>
+  );
+});
+
+const GroupItem = ({ group }: { group: GroupProps }) => {
+  const { updateGroup, startCallCycle: makeCalls, is_cycling } = useGlobal();
+  const [openEditModal, setOpenEditModal] = useState(false);
 
   const startCallCycle = async (contacts: Contact[]) => {
     await makeCalls(contacts);
@@ -35,65 +43,69 @@ const ContactsGroupe = memo(() => {
   const onDeleteContact = async (group: GroupProps) => {
     updateGroup(group);
   };
-
   return (
-    <List.AccordionGroup>
-      {groupes.length > 0 &&
-        groupes.map((group, idx) => {
-          return (
-            <List.Accordion
-              expanded={true}
-              key={group.id}
-              id={`${group.name}-${idx}`}
-              title={group.name}
-              titleStyle={{
-                color: Colors.black,
-                fontSize: 20,
-                fontWeight: "bold",
-              }}
-              left={() => (
-                <Avatar.Icon
-                  size={40}
-                  icon="account-group"
-                  color={Colors.white}
-                  style={{ backgroundColor: Colors.lightBlue900 }}
-                />
-              )}
-            >
-              <>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "space-evenly",
-                  }}
-                >
-                  <Button
-                    icon={"phone"}
-                    mode="outlined"
-                    disabled={is_cycling}
-                    color={Colors.green500}
-                    onPress={() => startCallCycle(group.contacts)}
-                  >
-                    <Text>Start</Text>
-                  </Button>
-                  <DeleteGroup disabled={is_cycling} group={group} />
-                  <AddModal group={group} disabled={is_cycling} />
-                </View>
-                <ContactsList
-                  contacts={group.contacts}
-                  allowSelect={false}
-                  porpuse="call"
-                  onSelect={async (checked) =>
-                    await onDeleteContact({ ...group, contacts: checked })
-                  }
-                />
-              </>
-            </List.Accordion>
-          );
-        })}
-    </List.AccordionGroup>
+    <List.Accordion
+      expanded={true}
+      id={`${group.id}+${group.name}`}
+      title={group.name}
+      titleStyle={{
+        color: Colors.black,
+        fontSize: 20,
+        fontWeight: "bold",
+      }}
+      left={() => (
+        <Avatar.Icon
+          size={40}
+          icon="account-group"
+          color={Colors.white}
+          style={{ backgroundColor: Colors.lightBlue900 }}
+        />
+      )}
+    >
+      <>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-evenly",
+          }}
+        >
+          <Button
+            icon={"phone"}
+            mode="contained"
+            disabled={is_cycling}
+            buttonColor={Colors.green500}
+            onPress={() => startCallCycle(group.contacts)}
+          >
+            <Text>Start</Text>
+          </Button>
+          <DeleteGroup disabled={is_cycling} group={group} />
+          <Button
+            icon={"pencil"}
+            mode="outlined"
+            disabled={is_cycling}
+            onPress={() => setOpenEditModal(true)}
+          >
+            <Text>Edit</Text>
+          </Button>
+          <GroupForm
+            group={group}
+            type="upadte"
+            visible={openEditModal}
+            hideModal={() => setOpenEditModal(false)}
+          />
+        </View>
+        <ContactsList
+          contacts={group.contacts}
+          allowSelect={false}
+          porpuse="call"
+          onSelect={async (checked) =>
+            await onDeleteContact({ ...group, contacts: checked })
+          }
+        />
+      </>
+    </List.Accordion>
   );
-});
+};
 
 const DeleteGroup = ({
   disabled,
@@ -103,7 +115,7 @@ const DeleteGroup = ({
   disabled: boolean;
 }) => {
   const [visible, setVisible] = React.useState(false);
-  const { deleteGroup, updateGroup, groupes } = useGlobal();
+  const { deleteGroup } = useGlobal();
 
   const showModal = () => setVisible(true);
   const hideModal = () => setVisible(false);
@@ -162,7 +174,7 @@ const DeleteGroup = ({
           >
             <Button
               onPress={handleDelete}
-              color={Colors.red500}
+              buttonColor={Colors.red500}
               icon="delete"
               mode="contained"
             >
@@ -171,7 +183,7 @@ const DeleteGroup = ({
             <Button
               onPress={handleCancel}
               mode="outlined"
-              color={Colors.green400}
+              buttonColor={Colors.green400}
             >
               Cancel
             </Button>
@@ -180,8 +192,8 @@ const DeleteGroup = ({
       </Portal>
       <Button
         icon={"delete-circle"}
-        mode="outlined"
-        color={Colors.red500}
+        mode="contained"
+        buttonColor={Colors.red500}
         disabled={disabled}
         onPress={showModal}
       >

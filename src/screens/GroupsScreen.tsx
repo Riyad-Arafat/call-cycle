@@ -1,11 +1,12 @@
-import { StyleSheet, ScrollView, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import React from "react";
 import { useIsFocused } from "@react-navigation/native";
 import { RootTabScreenProps } from "../typings/types";
-import ContactsGroupe, { GroupProps } from "../components/CntactsGroupe";
+import ContactsGroupe from "../components/CntactsGroupe";
 import { getContactsGroups } from "../apis";
 import Loading from "../components/Loading";
 import { useGlobal } from "../context/Global";
+import { FabGroup } from "@components/FabGroup/FabGroup";
 
 export default function GroupsScreen({
   navigation,
@@ -37,20 +38,18 @@ export default function GroupsScreen({
   if (loading) return <Loading />;
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <View style={styles.contactsView}>
-        {/* <ContactsItems contacts={checked} /> */}
         <ContactsGroupe />
-        {/* <ModaleScreen /> */}
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
+    // alignItems: "center",
   },
   title: {
     fontSize: 20,

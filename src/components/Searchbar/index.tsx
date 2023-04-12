@@ -1,7 +1,7 @@
 import React from "react";
 import { View } from "react-native";
-import { Text, Searchbar as Search } from "react-native-paper";
-import { useGlobal } from "../../context/Global";
+import { Searchbar as Search } from "react-native-paper";
+import { useGlobal } from "@hooks/useGlobal";
 
 const Searchbar = () => {
   const { handel_search_value, search_value } = useGlobal();

@@ -1,21 +1,18 @@
-import { ScrollView, StyleSheet, View } from "react-native";
-import React from "react";
+import { ScrollView } from "react-native";
+import React, { useCallback } from "react";
 import { useIsFocused } from "@react-navigation/native";
-import { RootTabScreenProps } from "../typings/types";
-import ContactsGroupe from "../components/CntactsGroupe";
 import { getContactsGroups } from "../apis";
 import Loading from "../components/Loading";
-import { useGlobal } from "../context/Global";
-import { FabGroup } from "@components/FabGroup/FabGroup";
+import { useGlobal } from "@hooks/useGlobal";
+import ContactsGroupe from "../components/CntactsGroupe";
 
-export default function GroupsScreen({
-  navigation,
-}: RootTabScreenProps<"Groups">) {
+export default function GroupsScreen() {
   const isFocused = useIsFocused();
   const [loading, setLoading] = React.useState(true);
   const { setGroupes: setG } = useGlobal();
 
-  const getData = async () => {
+  const getData = useCallback(async () => {
+    if (!isFocused) return;
     setLoading(true);
     try {
       const data = await getContactsGroups();
@@ -26,37 +23,21 @@ export default function GroupsScreen({
     } finally {
       setLoading(false);
     }
-  };
+  }, [isFocused, setG]);
 
   React.useEffect(() => {
-    // Call only when screen open or when back on screen
-    if (isFocused) {
-      getData();
-    }
-  }, [isFocused]);
+    getData();
+  }, [getData]);
 
   if (loading) return <Loading />;
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.contactsView}>
-        <ContactsGroupe />
-      </View>
+    <ScrollView
+      style={{
+        width: "100%",
+      }}
+    >
+      <ContactsGroupe />
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    // alignItems: "center",
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  contactsView: {
-    width: "100%",
-    height: "75%",
-  },
-});

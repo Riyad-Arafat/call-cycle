@@ -19,6 +19,7 @@ export const Call = React.memo(
 
     return (
       <IconButton
+        style={{ marginHorizontal: 0 }}
         icon={"phone"}
         iconColor={Colors.green500}
         onPress={startCall}

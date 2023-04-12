@@ -1,15 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { GroupProps } from "../components/CntactsGroupe";
+import { IGroup } from "@typings/group";
 import { Contact } from "expo-contacts";
+
 /// get all contacts groupes from storage
-export const getContactsGroups = async (): Promise<GroupProps[]> => {
-  let data: GroupProps[] = [];
+export const getContactsGroups = async (): Promise<IGroup[]> => {
+  let data: IGroup[] = [];
   try {
     const currentGroupes = await AsyncStorage.getItem("@groupes");
     data =
-      currentGroupes != null
-        ? JSON.parse(currentGroupes)
-        : ([] as GroupProps[]);
+      currentGroupes != null ? JSON.parse(currentGroupes) : ([] as IGroup[]);
   } catch (e) {
     // error reading value
   }
@@ -17,25 +16,23 @@ export const getContactsGroups = async (): Promise<GroupProps[]> => {
 };
 
 // get group by id from storage and return it
-export const getGroupById = async (
-  id: string
-): Promise<GroupProps | undefined> => {
-  let data: GroupProps | undefined = undefined;
+export const getGroupById = async (id: string): Promise<IGroup | undefined> => {
   try {
     const groupes = await getContactsGroups();
-    data = groupes.find((g) => g.id === id);
-    return data;
+    const group = groupes.find((g) => g.id === id);
+
+    return group;
   } catch (e) {
     // error reading value
   }
-  return data;
+  return undefined;
 };
 
 /// update group in storage by id
 export const updateGroup = async (
   id: string,
-  group: GroupProps
-): Promise<GroupProps | undefined> => {
+  group: IGroup
+): Promise<IGroup | undefined> => {
   try {
     const groupes = await getContactsGroups();
     const index = groupes.findIndex((g) => g.id === id);
@@ -71,15 +68,15 @@ export const deleteGroup = async (id: string): Promise<boolean> => {
 
 /// store new contacts groupes to storage
 export const setContactsGroups = async (name: string, contacts: Contact[]) => {
-  let group = {
-    id: `${Math.random()}-${Date.now()}-${Math.random().toFixed(10)}`,
+  const group = {
+    id: uuidv4(),
     name,
     contacts,
-  };
+  } as IGroup;
   try {
     // get the value from storage
     const groupes = await getContactsGroups();
-    let newGroupes = [...groupes, group];
+    const newGroupes: IGroup[] = [...groupes, group];
     // save the value
     const jsonValue = JSON.stringify(newGroupes);
     await AsyncStorage.setItem("@groupes", jsonValue);
@@ -89,4 +86,13 @@ export const setContactsGroups = async (name: string, contacts: Contact[]) => {
     console.log(e);
     return false;
   }
+};
+
+// function to create id for new group uuid
+export const uuidv4 = () => {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0,
+      v = c == "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
 };

@@ -1,33 +1,34 @@
 import React from "react";
+import { View } from "react-native";
 import {
+  Button,
   MD2Colors as Colors,
-  IconButton,
   Modal,
   Portal,
   Text,
-  Button,
 } from "react-native-paper";
-import { Contact } from "@typings/types";
-import { View } from "react-native";
+import { useGlobal } from "@hooks/useGlobal";
+import { IGroup } from "@typings/group";
 
-export const DeleteContact = React.memo(
-  ({
-    disabled,
-    onPress,
-    contact,
-  }: {
-    contact: Contact;
-    disabled: boolean;
-    onPress: () => void;
-  }) => {
+interface DefaultProps {
+  group: IGroup;
+  disabled: boolean;
+  onSucess?: () => void;
+}
+
+export const DeleteGroup = React.memo(
+  ({ disabled, group, onSucess }: DefaultProps) => {
     const [visible, setVisible] = React.useState(false);
+    const { deleteGroup } = useGlobal();
 
     const showModal = () => setVisible(true);
-    const hideModal = () => setVisible(false);
+    const hideModal = () => {
+      setVisible(false);
+      onSucess?.();
+    };
 
     const handleDelete = () => {
-      hideModal();
-      onPress();
+      deleteGroup(group.id, hideModal);
     };
 
     const handleCancel = () => {
@@ -58,7 +59,6 @@ export const DeleteContact = React.memo(
             >
               Are you sure you want to delete
             </Text>
-
             <Text
               style={{
                 fontSize: 20,
@@ -67,9 +67,8 @@ export const DeleteContact = React.memo(
                 marginBottom: 20,
               }}
             >
-              {contact.name}
+              {`${group.name}`}
             </Text>
-
             <View
               style={{
                 display: "flex",
@@ -97,13 +96,15 @@ export const DeleteContact = React.memo(
             </View>
           </Modal>
         </Portal>
-        <IconButton
-          style={{ marginHorizontal: 0 }}
-          icon={"delete"}
-          iconColor={Colors.red500}
-          onPress={showModal}
+        <Button
+          icon={"delete-circle"}
+          mode="contained"
+          buttonColor={Colors.red500}
           disabled={disabled}
-        />
+          onPress={showModal}
+        >
+          Delete
+        </Button>
       </>
     );
   }

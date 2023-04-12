@@ -9,6 +9,7 @@ export const StartSubCycle = React.memo(
         iconColor={Colors.green500}
         disabled={disabled}
         onPress={onPress}
+        style={{ marginHorizontal: 0 }}
       />
     );
   }

@@ -1,31 +1,31 @@
-import React, { useCallback } from "react";
+import React from "react";
 import { AppState, PermissionsAndroid } from "react-native";
 import { Contact } from "../typings/types";
 import * as Contacts from "expo-contacts";
 import { search_fun, sortContacts } from "../utils";
 import Loading from "../components/Loading";
-import { GroupProps } from "../components/CntactsGroupe";
 import {
   deleteGroup as deleteGroupAPI,
   setContactsGroups,
   updateGroup as updateGroupAPI,
 } from "../apis";
 import RNImmediatePhoneCall from "react-native-immediate-phone-call";
+import { IGroup } from "@typings/group";
 
 interface Props {
   handel_search_value: (s: string) => void;
   search_value: string;
   contacts: Contact[];
-  groupes: GroupProps[];
-  updateGroup: (group: GroupProps) => void;
-  deleteGroup: (group_id: string) => void;
+  groupes: IGroup[];
+  updateGroup: (group: IGroup, callback?: () => void) => void;
+  deleteGroup: (group_id: string, callback?: () => void) => void;
   addGroup: (name: string, contacts: Contacts.Contact[]) => void;
-  setGroupes: (groupes: GroupProps[]) => void;
+  setGroupes: (groupes: IGroup[]) => void;
   startCallCycle: (contacts: Contact[]) => Promise<void>;
   is_cycling: boolean;
 }
 
-const GlobalContext = React.createContext<Props>({
+export const GlobalContext = React.createContext<Props>({
   search_value: "",
   contacts: [],
   groupes: [],
@@ -47,7 +47,7 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = React.useState(true);
   const [is_cycling, setIsCycling] = React.useState(false);
 
-  const [groupes, setGroupes] = React.useState<GroupProps[]>([]);
+  const [groupes, setGroupes] = React.useState<IGroup[]>([]);
   const appState = React.useRef(AppState.currentState);
   const [appStateVisible, setAppStateVisible] = React.useState(
     appState.current
@@ -55,42 +55,51 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
 
   const addGroup = async (name: string, contacts: Contacts.Contact[]) => {
     setIsCycling(true);
-    await setContactsGroups(name, contacts).then((group) => {
-      if (group) setGroupes((prev) => [...prev, group]);
-    });
-    setTimeout(() => {
-      setIsCycling(false);
-    }, 1000);
+    await setContactsGroups(name, contacts)
+      .then((group) => {
+        if (group) setGroupes((prev) => [...prev, group]);
+      })
+      .then(() => {
+        setIsCycling(false);
+      });
   };
 
-  const updateGroup = async (group: GroupProps) => {
-    setIsCycling(true);
-    await updateGroupAPI(group.id, {
-      id: group.id,
-      name: group.name,
-      contacts: group.contacts,
-    }).then(() => {
-      setGroupes((prev) => {
-        let newgroupes = [...prev];
-        const index = newgroupes.findIndex((g) => g.id === group.id);
-        if (index !== -1) newgroupes[index] = group;
-        return newgroupes;
+  const updateGroup = async (group: IGroup, callback?: () => void) => {
+    try {
+      setIsCycling(true);
+      await updateGroupAPI(group.id, {
+        ...group,
+        contacts: [...group.contacts],
       });
-    });
-    setTimeout(() => {
+      setGroupes((prevGroups) => {
+        const groupIndex = prevGroups.findIndex((g) => g.id === group.id);
+        const updatedGroups = [...prevGroups];
+        if (groupIndex !== -1) {
+          updatedGroups[groupIndex] = group;
+        }
+        return updatedGroups;
+      });
+      callback?.();
+    } catch (error) {
+      console.error(error);
+    } finally {
       setIsCycling(false);
-    }, 1000);
+    }
   };
 
-  const deleteGroup = async (group_id: string) => {
-    await deleteGroupAPI(group_id).then(() => {
-      setGroupes((prev) => {
-        let newgroupes = [...prev];
-        const index = newgroupes.findIndex((g) => g.id === group_id);
-        if (index !== -1) newgroupes.splice(index, 1);
-        return newgroupes;
+  const deleteGroup = async (group_id: string, callback?: () => void) => {
+    await deleteGroupAPI(group_id)
+      .then(() => {
+        setGroupes((prev) => {
+          const newgroupes = [...prev];
+          const index = newgroupes.findIndex((g) => g.id === group_id);
+          if (index !== -1) newgroupes.splice(index, 1);
+          return newgroupes;
+        });
+      })
+      .finally(() => {
+        callback?.();
       });
-    });
   };
 
   const handel_search_value = (val: string) => set_search_value(val);
@@ -117,7 +126,7 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
         fields: [Contacts.Fields.Name, Contacts.Fields.PhoneNumbers],
       });
       if (data.length > 0) {
-        let sortedContacts = await sortContacts(data);
+        const sortedContacts = await sortContacts(data);
         setContacts(sortedContacts);
       }
     }
@@ -127,7 +136,11 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
     setIsCycling(true);
     for (const contact of contacts) {
       try {
-        if (contact.phoneNumbers && !!contact.phoneNumbers[0].number) {
+        if (
+          contact.phoneNumbers &&
+          !!contact.phoneNumbers[0].number &&
+          !contact.disabled
+        ) {
           RNImmediatePhoneCall.immediatePhoneCall(
             contact.phoneNumbers[0].number
           );
@@ -154,6 +167,7 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.remove();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handel_search = React.useCallback(() => {
@@ -172,7 +186,7 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
       value={{
         handel_search_value,
         search_value,
-        contacts: !!search_value ? search_result : contacts,
+        contacts: search_value ? search_result : contacts,
         groupes,
         updateGroup,
         deleteGroup,
@@ -186,7 +200,5 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
     </GlobalContext.Provider>
   );
 };
-
-export const useGlobal = () => React.useContext(GlobalContext);
 
 export default GlobalProvider;

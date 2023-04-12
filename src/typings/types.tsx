@@ -12,6 +12,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as Contacts from "expo-contacts";
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace ReactNavigation {
     interface RootParamList extends RootStackParamList {}
   }
@@ -39,4 +40,6 @@ export type RootTabScreenProps<Screen extends keyof RootTabParamList> =
   >;
 
 // ////
-export type Contact = Contacts.Contact;
+export type Contact = Contacts.Contact & {
+  disabled?: boolean;
+};

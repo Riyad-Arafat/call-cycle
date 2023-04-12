@@ -14,9 +14,7 @@
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.riyadelberkawy.callcycle"
@@ -28,15 +26,12 @@
         "foregroundImage": "./src/assets/images/icon.png",
         "backgroundColor": "#000000"
       },
-      "permissions": [
-        "CAMERA_ROLL",
-        "READ_CONTACTS",
-        "CALL_PHONE"
-      ],
+      "permissions": ["CAMERA_ROLL", "READ_CONTACTS", "CALL_PHONE"],
       "package": "com.riyadelberkawy.callcycle"
     },
     "web": {
-      "favicon": "./src/assets/images/favicon.png"
+      "favicon": "./src/assets/images/favicon.png",
+      "bundler": "metro"
     },
     "scheme": "call-cycle",
     "extra": {

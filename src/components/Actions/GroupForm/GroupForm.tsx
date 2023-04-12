@@ -32,8 +32,13 @@ export const GroupForm = React.memo(
     const [text, setText] = React.useState(
       props.type === "upadte" ? props.group.name : ""
     );
-    const { contacts, updateGroup, addGroup, handel_search_value, is_cycling } =
-      useGlobal();
+    const {
+      contacts,
+      updateGroup,
+      addGroup,
+      handel_search_value,
+      on_opreation,
+    } = useGlobal();
 
     const onSelect = (contacts: Contact[]) => {
       setSelectedContact(contacts);
@@ -109,7 +114,7 @@ export const GroupForm = React.memo(
             props.type === "create" ? "account-multiple-plus" : "pencil-outline"
           }
           mode="outlined"
-          disabled={is_cycling}
+          disabled={on_opreation}
           onPress={openModal}
         >
           <Text>{props.type === "create" ? "Create group" : "Edit"}</Text>

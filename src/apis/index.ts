@@ -41,29 +41,27 @@ export const updateGroup = async (
       await AsyncStorage.setItem("@groupes", JSON.stringify(groupes));
       return group;
     }
-    return undefined;
+    throw new Error("group not found");
   } catch (e) {
-    console.log(e);
-    // error reading value
+    throw new Error(e);
   }
-  return undefined;
 };
 
 // delete group from storage by id
-export const deleteGroup = async (id: string): Promise<boolean> => {
+export const deleteGroup = async (id: string): Promise<string> => {
   try {
     const groupes = await getContactsGroups();
     const index = groupes.findIndex((g) => g.id === id);
     if (index !== -1) {
       groupes.splice(index, 1);
       await AsyncStorage.setItem("@groupes", JSON.stringify(groupes));
-      return true;
+      return "group deleted";
     }
-    return false;
+    throw new Error("group not found");
   } catch (e) {
     // error reading value
+    throw new Error(e);
   }
-  return false;
 };
 
 /// store new contacts groupes to storage
@@ -83,8 +81,7 @@ export const setContactsGroups = async (name: string, contacts: Contact[]) => {
     return group;
   } catch (e) {
     // saving error
-    console.log(e);
-    return false;
+    throw new Error(e);
   }
 };
 

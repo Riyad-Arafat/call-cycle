@@ -37,7 +37,7 @@ export const ContactsList = memo(
     const [rendered_contacts, set_rendered_contacts] = React.useState<
       Contact[]
     >([]);
-    const { startCallCycle, is_cycling } = useGlobal();
+    const { startCallCycle, on_opreation } = useGlobal();
 
     useEffect(() => {
       set_contacts(initial_contacts);
@@ -165,7 +165,7 @@ export const ContactsList = memo(
               allowSelect={allowSelect}
               porpuse={porpuse}
               removeContact={removeContact}
-              disabled={is_cycling}
+              disabled={on_opreation}
               onPress={handleCheck}
               isChecked={isChecked(contact, checked_contacts)}
               StartSubCycle={() => {

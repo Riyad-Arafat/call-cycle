@@ -83,7 +83,7 @@ const ActionsHeader = ({
   startCallCycle,
   onUpadteSuccess,
 }: IActionsHeader) => {
-  const { is_cycling } = useGlobal();
+  const { on_opreation } = useGlobal();
   const router = useRouter();
 
   return (
@@ -99,14 +99,14 @@ const ActionsHeader = ({
       <Button
         icon={"phone"}
         mode="contained"
-        disabled={is_cycling}
+        disabled={on_opreation}
         buttonColor={Colors.green500}
         onPress={startCallCycle}
       >
         <Text>Start</Text>
       </Button>
       <DeleteGroup
-        disabled={is_cycling}
+        disabled={on_opreation}
         group={group}
         onSucess={() => router.back()}
       />

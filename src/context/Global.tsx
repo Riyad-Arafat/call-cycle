@@ -51,55 +51,84 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
     appState.current
   );
 
-  const addGroup = async (name: string, contacts: Contacts.Contact[]) => {
-    set_on_opreation(true);
-    try {
-      const group = await setContactsGroups(name, contacts);
-      setGroupes((prev) => [...prev, group]);
-    } catch (error) {
-      console.error(error);
-    } finally {
+  const _handelEndOpreation = useCallback((time = 1000) => {
+    // wait until the storage is updated and then set on_opreation to false
+    setTimeout(() => {
       set_on_opreation(false);
-    }
-  };
+    }, time);
+  }, []);
 
-  const updateGroup = async (group: IGroup, callback?: () => void) => {
-    try {
+  const addGroup = useCallback(
+    async (name: string, contacts: Contacts.Contact[]) => {
       set_on_opreation(true);
-      const newGroup = await updateGroupAPI(group.id, {
-        ...group,
-        contacts: [...group.contacts],
-      });
-      setGroupes((prevGroups) => {
-        const groupIndex = prevGroups.findIndex((g) => g.id === newGroup.id);
-        const updatedGroups = [...prevGroups];
-        if (groupIndex !== -1) {
-          updatedGroups[groupIndex] = newGroup;
-        }
-        return updatedGroups;
-      });
-      callback?.();
-    } catch (error) {
-      console.error(error);
-    } finally {
-      set_on_opreation(false);
-    }
-  };
+      try {
+        const group = await setContactsGroups(name, contacts);
+        setGroupes((prev) => [...prev, group]);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        _handelEndOpreation();
+      }
+    },
+    [_handelEndOpreation]
+  );
 
-  const deleteGroup = async (group_id: string, callback?: () => void) => {
-    try {
-      await deleteGroupAPI(group_id);
-      setGroupes((prev) => {
-        const newgroupes = [...prev];
-        const index = newgroupes.findIndex((g) => g.id === group_id);
-        if (index !== -1) newgroupes.splice(index, 1);
-        return newgroupes;
+  const updateGroup = useCallback(
+    async (group: IGroup, callback?: () => void) => {
+      try {
+        set_on_opreation(true);
+        const newGroup = await updateGroupAPI(group.id, {
+          ...group,
+          contacts: [...group.contacts],
+        });
+        setGroupes((prevGroups) => {
+          const groupIndex = prevGroups.findIndex((g) => g.id === newGroup.id);
+          const updatedGroups = [...prevGroups];
+          if (groupIndex !== -1) {
+            updatedGroups[groupIndex] = newGroup;
+          }
+          return updatedGroups;
+        });
+        callback?.();
+      } catch (error) {
+        console.error(error);
+      } finally {
+        _handelEndOpreation();
+      }
+    },
+    [_handelEndOpreation]
+  );
+
+  const deleteGroup = useCallback(
+    async (group_id: string, callback?: () => void) => {
+      try {
+        await deleteGroupAPI(group_id);
+        setGroupes((prev) => {
+          const newgroupes = [...prev];
+          const index = newgroupes.findIndex((g) => g.id === group_id);
+          if (index !== -1) newgroupes.splice(index, 1);
+          return newgroupes;
+        });
+        callback?.();
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    []
+  );
+
+  const importContects = useCallback(async () => {
+    const { status } = await Contacts.requestPermissionsAsync();
+    if (status === "granted") {
+      const { data } = await Contacts.getContactsAsync({
+        fields: [Contacts.Fields.Name, Contacts.Fields.PhoneNumbers],
       });
-      callback?.();
-    } catch (error) {
-      console.error(error);
+      if (data.length > 0) {
+        const sortedContacts = await sortContacts(data);
+        setContacts(sortedContacts);
+      }
     }
-  };
+  }, []);
 
   const getPermissions = useCallback(async () => {
     setLoading(true);
@@ -120,48 +149,38 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [importContects]);
 
-  const importContects = async () => {
-    const { status } = await Contacts.requestPermissionsAsync();
-    if (status === "granted") {
-      const { data } = await Contacts.getContactsAsync({
-        fields: [Contacts.Fields.Name, Contacts.Fields.PhoneNumbers],
-      });
-      if (data.length > 0) {
-        const sortedContacts = await sortContacts(data);
-        setContacts(sortedContacts);
-      }
-    }
-  };
-
-  const startCallCycle = async (contacts: Contact[]) => {
-    set_on_opreation(true);
-    for (const contact of contacts) {
-      try {
-        if (
-          contact.phoneNumbers &&
-          !!contact.phoneNumbers[0].number &&
-          !contact.disabled
-        ) {
-          RNImmediatePhoneCall.immediatePhoneCall(
-            contact.phoneNumbers[0].number
-          );
-          // wait until the app is in the foreground
-          await wait(5000);
-          // await wait until call is finished
-          while (appStateVisible !== "active") {
-            await wait(2000);
+  const startCallCycle = useCallback(
+    async (contacts: Contact[]) => {
+      set_on_opreation(true);
+      for (const contact of contacts) {
+        try {
+          if (
+            contact.phoneNumbers &&
+            !!contact.phoneNumbers[0].number &&
+            !contact.disabled
+          ) {
+            RNImmediatePhoneCall.immediatePhoneCall(
+              contact.phoneNumbers[0].number
+            );
+            // wait until the app is in the foreground
+            await wait(5000);
+            // await wait until call is finished
+            while (appStateVisible !== "active") {
+              await wait(2000);
+            }
           }
+        } catch (error) {
+          console.log(error);
         }
-      } catch (error) {
-        console.log(error);
       }
-    }
-    set_on_opreation(false);
-  };
+      _handelEndOpreation(0);
+    },
+    [_handelEndOpreation, appStateVisible]
+  );
 
-  const handel_search = React.useCallback(
+  const handel_search = useCallback(
     (val: string) => {
       search_value.current = val;
       if (search_value.current.length > 0)

@@ -19,9 +19,10 @@
       }
     },
     "preview": {
-      "image": "latest",
       "distribution": "internal",
       "android": {
+        "image": "latest",
+
         "buildType": "apk"
       },
       "ios": {

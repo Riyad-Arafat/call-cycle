@@ -1,6 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { IGroup } from "@typings/group";
+import { IUser } from "@typings/types";
+import { sortContacts } from "@utils/index";
+import { createClient } from "@vercel/postgres";
 import { Contact } from "expo-contacts";
+import * as Contacts from "expo-contacts";
+
+const client = createClient({
+  connectionString: process.env.EXPO_PUBLIC_POSTGRES_URL_NON_POOLING,
+});
 
 /// get all contacts groupes from storage
 export const getContactsGroups = async (): Promise<IGroup[]> => {
@@ -18,9 +26,25 @@ export const getContactsGroups = async (): Promise<IGroup[]> => {
 // get group by id from storage and return it
 export const getGroupById = async (id: string): Promise<IGroup | undefined> => {
   try {
-    const groupes = await getContactsGroups();
-    const group = groupes.find((g) => g.id === id);
-
+    const groups = await getContactsGroups();
+    const group = groups.find((g) => g.id === id);
+    if (group) {
+      const { status } = await Contacts.requestPermissionsAsync();
+      if (status === "granted") {
+        const { data } = await Contacts.getContactsAsync({
+          fields: [Contacts.Fields.Name, Contacts.Fields.PhoneNumbers],
+        });
+        if (data.length > 0) {
+          const sortedContacts = await sortContacts(data);
+          group.contacts = group.contacts.map((contact) => {
+            const found = sortedContacts.find(
+              (c) => c.phoneNumbers[0].number === contact.phoneNumbers[0].number
+            );
+            return found ? { ...contact, ...found } : contact;
+          });
+        }
+      }
+    }
     return group;
   } catch (e) {
     // error reading value
@@ -92,4 +116,34 @@ export const uuidv4 = () => {
       v = c == "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
+};
+
+// save local user data to storage
+export const saveUser = async (data: any) => {
+  try {
+    const jsonValue = JSON.stringify(data);
+    await AsyncStorage.setItem("@user", jsonValue);
+  } catch (e) {
+    // saving error
+    throw new Error(e);
+  }
+};
+
+// get user data from storage
+export const getUser = async (): Promise<IUser | null> => {
+  try {
+    const userData = await AsyncStorage.getItem("@user");
+    return userData != null ? JSON.parse(userData) : null;
+  } catch (e) {
+    // error reading value from storage
+    throw new Error(e);
+  }
+};
+
+export const login = async (phoneNumber: string, password: string) => {
+  const { rows } =
+    await client.sql`SELECT * FROM users WHERE phone_number = ${phoneNumber} AND password = ${password}`;
+
+  const user = rows.length > 0 ? rows[0] : null;
+  return user;
 };

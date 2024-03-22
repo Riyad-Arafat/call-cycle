@@ -43,3 +43,11 @@ export type RootTabScreenProps<Screen extends keyof RootTabParamList> =
 export type Contact = Contacts.Contact & {
   disabled?: boolean;
 };
+
+export interface IUser {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+}

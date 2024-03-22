@@ -16,35 +16,36 @@ export const search_fun = (contacts: Contact[], search: string) => {
   return data;
 };
 
-/// return unique phone numbers from array of phone numbers
 const getUniquePhones = (array: ExpoContact[]) => {
+  const seen = new Set();
   const uniquePhones = array
-    .filter((item, index, self) => {
-      return (
-        index ===
-        self.findIndex(
-          (t) => t.phoneNumbers[0].number === item.phoneNumbers[0].number
-        )
-      );
+    .filter((item) => {
+      const phoneNumber = item.phoneNumbers[0].number;
+      if (!seen.has(phoneNumber)) {
+        seen.add(phoneNumber);
+        return true;
+      }
+      return false;
     })
-    .sort();
+    .sort((a, b) =>
+      a.phoneNumbers[0].number.localeCompare(b.phoneNumbers[0].number)
+    );
 
   return uniquePhones;
 };
 
 export const sortContacts = async (importedContacts: ExpoContact[]) => {
-  const data: ExpoContact[] = [];
+  const data: ExpoContact[] = importedContacts
+    .filter(
+      (contact) => !!contact.phoneNumbers && contact.phoneNumbers.length > 0
+    )
+    .flatMap((contact) =>
+      contact.phoneNumbers.map((phone) => ({
+        ...contact,
+        phoneNumbers: [{ ...phone, number: removeSpace(phone.number) }],
+      }))
+    );
 
-  importedContacts.forEach((contact) => {
-    if (!!contact.phoneNumbers && contact.phoneNumbers.length > 0) {
-      for (const phone of contact.phoneNumbers) {
-        data.push({
-          ...contact,
-          phoneNumbers: [{ ...phone, number: removeSpace(phone.number) }],
-        });
-      }
-    }
-  });
   return getUniquePhones(data);
 };
 

@@ -1,50 +1,51 @@
 import React, { useCallback } from "react";
 import { AppState, PermissionsAndroid } from "react-native";
-import { Contact } from "../typings/types";
+import { Contact, IUser } from "../typings/types";
 import * as Contacts from "expo-contacts";
-import { search_fun, sortContacts } from "../utils";
+import { sortContacts } from "../utils";
 import Loading from "../components/Loading";
 import {
   deleteGroup as deleteGroupAPI,
+  getUser,
   setContactsGroups,
   updateGroup as updateGroupAPI,
 } from "../apis";
 import RNImmediatePhoneCall from "react-native-immediate-phone-call";
 import { IGroup } from "@typings/group";
-
+import { Slot, router } from "expo-router";
 interface Props {
-  handel_search_value: (s: string) => void;
   contacts: Contact[];
   groupes: IGroup[];
-  updateGroup: (group: IGroup, callback?: () => void) => void;
-  deleteGroup: (group_id: string, callback?: () => void) => void;
-  addGroup: (name: string, contacts: Contacts.Contact[]) => void;
+  updateGroup: (group: IGroup, callback?: () => void) => Promise<void>;
+  deleteGroup: (group_id: string, callback?: () => void) => Promise<void>;
+  addGroup: (name: string, contacts: Contacts.Contact[]) => Promise<void>;
   setGroupes: (groupes: IGroup[]) => void;
   startCallCycle: (contacts: Contact[]) => Promise<void>;
   on_opreation: boolean;
+  user: IUser | null;
+  setUser(user: IUser): void;
 }
 
 export const GlobalContext = React.createContext<Props>({
   contacts: [],
   groupes: [],
-  handel_search_value: (s) => console.log("s", s),
   updateGroup: async () => console.log("aa"),
   deleteGroup: async () => console.log("ss"),
-  addGroup: () => console.log("ss"),
+  addGroup: async () => console.log("ss"),
   setGroupes: () => console.log("ss"),
   startCallCycle: async () => console.log("ss"),
   on_opreation: false,
+  user: null,
+  setUser: () => console.log("ss"),
 });
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
-  const search_value = React.useRef("");
   const [contacts, setContacts] = React.useState<Contact[]>([]);
-  const [search_result, setsearch_result] = React.useState<Contact[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [on_opreation, set_on_opreation] = React.useState(false);
-
+  const [user, setUser] = React.useState<IUser | null>(null);
   const [groupes, setGroupes] = React.useState<IGroup[]>([]);
   const appState = React.useRef(AppState.currentState);
   const [appStateVisible, setAppStateVisible] = React.useState(
@@ -124,26 +125,23 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
         fields: [Contacts.Fields.Name, Contacts.Fields.PhoneNumbers],
       });
       if (data.length > 0) {
+        console.log("contacts", data.length);
         const sortedContacts = await sortContacts(data);
+        console.log("sortedContacts", sortedContacts.length);
         setContacts(sortedContacts);
       }
     }
   }, []);
 
-  const getPermissions = useCallback(async () => {
+  const getAuthedUser = useCallback(async () => {
     setLoading(true);
     try {
-      await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.CALL_PHONE,
-        {
-          title: "Contacts",
-          message: "This app would like to view your contacts.",
-          buttonPositive: "OK",
-          buttonNeutral: "Cancel",
-          buttonNegative: "Deny",
-        }
-      );
-      await importContects();
+      const res = await getUser();
+      if (res) {
+        setUser(res);
+        await importContects();
+        router.navigate("/contactas");
+      }
     } catch (error) {
       console.error(error);
     } finally {
@@ -180,16 +178,6 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
     [_handelEndOpreation, appStateVisible]
   );
 
-  const handel_search = useCallback(
-    (val: string) => {
-      search_value.current = val;
-      if (search_value.current.length > 0)
-        setsearch_result(search_fun(contacts, search_value.current));
-      else setsearch_result([]);
-    },
-    [contacts]
-  );
-
   React.useEffect(() => {
     const subscription = AppState.addEventListener("change", (nextAppState) => {
       appState.current = nextAppState;
@@ -200,16 +188,37 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  React.useEffect(() => {
-    getPermissions();
-  }, [getPermissions]);
+  const getPersmission = useCallback(async () => {
+    const status = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.READ_CONTACTS,
+      {
+        title: "Contacts",
+        message: "This app would like to view your contacts.",
+        buttonNegative: "Cancel",
+        buttonPositive: "OK",
+      }
+    );
 
-  if (loading) return <Loading />;
+    if (status === "granted") {
+      await getAuthedUser();
+    }
+  }, [getAuthedUser]);
+
+  React.useEffect(() => {
+    getPersmission();
+  }, [getPersmission]);
+
+  if (loading)
+    return (
+      <>
+        <Loading />
+        <Slot />
+      </>
+    );
   return (
     <GlobalContext.Provider
       value={{
-        handel_search_value: handel_search,
-        contacts: search_result.length > 0 ? search_result : contacts,
+        contacts: contacts,
         groupes,
         updateGroup,
         deleteGroup,
@@ -217,6 +226,8 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
         setGroupes,
         startCallCycle,
         on_opreation,
+        user,
+        setUser,
       }}
     >
       {children}

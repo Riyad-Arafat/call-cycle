@@ -9,7 +9,6 @@ const GroupForm = React.lazy(() => import("@components/Actions/GroupForm"));
 export default function Home() {
   return (
     <View>
-      {/* Use the `Screen` component to configure the layout. */}
       <React.Suspense fallback={null}>
         <Stack.Screen options={{ title: "Groups", header: () => <Header /> }} />
         <GroupsScreen />
@@ -32,7 +31,14 @@ const Header = () => {
           borderBottomWidth: 1,
         }}
       >
-        <Text>Groups</Text>
+        <Text
+          style={{
+            fontSize: 20,
+            fontWeight: "bold",
+          }}
+        >
+          Groups
+        </Text>
         <GroupForm type="create" />
       </View>
     </>

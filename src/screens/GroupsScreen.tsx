@@ -1,4 +1,4 @@
-import { ScrollView } from "react-native";
+import { View } from "react-native";
 import React, { useCallback } from "react";
 import { useIsFocused } from "@react-navigation/native";
 import { getContactsGroups } from "../apis";
@@ -32,12 +32,13 @@ export default function GroupsScreen() {
   if (loading) return <Loading />;
 
   return (
-    <ScrollView
+    <View
       style={{
         width: "100%",
+        padding: 10,
       }}
     >
       <ContactsGroupe />
-    </ScrollView>
+    </View>
   );
 }

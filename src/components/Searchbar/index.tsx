@@ -1,22 +1,15 @@
 import React from "react";
 import { View } from "react-native";
 import { Searchbar as Search } from "react-native-paper";
-import { useGlobal } from "@hooks/useGlobal";
 
-const Searchbar = () => {
-  const { handel_search_value } = useGlobal();
+interface Props {
+  onChangeText: (str?: string) => void;
+}
 
-  const [value, setValue] = React.useState("");
-
-  const onChangeText = (str: string) => {
-    handel_search_value(str);
-    setValue(str);
-  };
-
+const Searchbar = ({ onChangeText }: Props) => {
   return (
-    <View>
+    <View style={{ padding: 10 }}>
       <Search
-        value={value}
         onChangeText={onChangeText}
         placeholder="search by name or phone number"
       />

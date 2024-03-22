@@ -24,11 +24,13 @@ export const DeleteGroup = React.memo(
     const showModal = () => setVisible(true);
     const hideModal = () => {
       setVisible(false);
-      onSucess?.();
     };
 
     const handleDelete = () => {
-      deleteGroup(group.id, hideModal);
+      deleteGroup(group.id, () => {
+        hideModal();
+        onSucess?.();
+      });
     };
 
     const handleCancel = () => {

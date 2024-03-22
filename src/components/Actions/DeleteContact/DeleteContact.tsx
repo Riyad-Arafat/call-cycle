@@ -9,17 +9,12 @@ import {
 } from "react-native-paper";
 import { Contact } from "@typings/types";
 import { View } from "react-native";
+import useGlobal from "@hooks/useGlobal";
 
 export const DeleteContact = React.memo(
-  ({
-    disabled,
-    onPress,
-    contact,
-  }: {
-    contact: Contact;
-    disabled: boolean;
-    onPress: () => void;
-  }) => {
+  ({ onPress, contact }: { contact: Contact; onPress: () => void }) => {
+    const { on_opreation: disabled } = useGlobal();
+
     const [visible, setVisible] = React.useState(false);
 
     const showModal = () => setVisible(true);

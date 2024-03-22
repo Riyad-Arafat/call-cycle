@@ -1,8 +1,11 @@
+import useGlobal from "@hooks/useGlobal";
 import React from "react";
 import { MD2Colors as Colors, IconButton } from "react-native-paper";
 
 export const StartSubCycle = React.memo(
-  ({ disabled, onPress }: { disabled: boolean; onPress: () => void }) => {
+  ({ onPress }: { onPress: () => void }) => {
+    const { on_opreation: disabled } = useGlobal();
+
     return (
       <IconButton
         icon={"arrow-down"}

@@ -13,22 +13,22 @@
       },
       "ios": {
         "image": "latest",
-
         "buildConfiguration": "Debug",
         "resourceClass": "m-medium"
-      }
+      },
+      "channel": "development"
     },
     "preview": {
       "distribution": "internal",
       "android": {
         "image": "latest",
-
         "buildType": "apk"
       },
       "ios": {
         "image": "latest",
         "resourceClass": "m-medium"
-      }
+      },
+      "channel": "preview"
     },
     "production": {
       "ios": {
@@ -38,7 +38,8 @@
       "android": {
         "image": "latest",
         "buildType": "apk"
-      }
+      },
+      "channel": "production"
     }
   },
   "submit": {

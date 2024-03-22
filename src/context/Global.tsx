@@ -13,6 +13,8 @@ import {
 import RNImmediatePhoneCall from "react-native-immediate-phone-call";
 import { IGroup } from "@typings/group";
 import { Slot, router } from "expo-router";
+import * as Updates from "expo-updates";
+
 interface Props {
   contacts: Contact[];
   groupes: IGroup[];
@@ -208,7 +210,29 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
     getPersmission();
   }, [getPersmission]);
 
-  if (loading)
+  const [isUpdating, setIsUpdating] = React.useState(false);
+
+  async function onFetchUpdateAsync() {
+    try {
+      setIsUpdating(true);
+      const update = await Updates.checkForUpdateAsync();
+
+      if (update.isAvailable) {
+        await Updates.fetchUpdateAsync();
+        await Updates.reloadAsync();
+      }
+    } catch (error) {
+      alert(`Error fetching latest Expo update: ${error}`);
+    } finally {
+      setIsUpdating(false);
+    }
+  }
+
+  React.useEffect(() => {
+    onFetchUpdateAsync();
+  }, []);
+
+  if (loading || isUpdating)
     return (
       <>
         <Loading />

@@ -7,28 +7,36 @@
       "developmentClient": true,
       "distribution": "internal",
       "android": {
+        "image": "latest",
         "gradleCommand": ":app:assembleDebug",
         "buildType": "apk"
       },
       "ios": {
+        "image": "latest",
+
         "buildConfiguration": "Debug",
         "resourceClass": "m-medium"
       }
     },
     "preview": {
+      "image": "latest",
       "distribution": "internal",
       "android": {
         "buildType": "apk"
       },
       "ios": {
+        "image": "latest",
+
         "resourceClass": "m-medium"
       }
     },
     "production": {
       "ios": {
+        "image": "latest",
         "resourceClass": "m-medium"
       },
       "android": {
+        "image": "latest",
         "buildType": "apk"
       }
     }

@@ -17,6 +17,7 @@ import { IGroup } from "@typings/group";
 import { useCallback } from "react";
 import { search_fun } from "@utils/index";
 import { FlatList, View } from "react-native";
+import { useTranslation } from "@hooks/useTranslation";
 
 interface DefaultProps {
   onDismiss?: () => void;
@@ -28,6 +29,7 @@ type Props = DefaultProps &
 
 export const GroupForm = React.memo(
   ({ onDismiss, onSucess, ...props }: Props) => {
+    const { t } = useTranslation();
     const [step, setStep] = React.useState(1);
     const [visible, setVisible] = React.useState(false);
     const [loading, setLoading] = React.useState(true);
@@ -173,7 +175,7 @@ export const GroupForm = React.memo(
             mode="contained"
             buttonColor={Colors.red500}
           >
-            {step === 1 ? "Cancel" : "Back"}
+            {step === 1 ? t("Cancel") : t("Back")}
           </Button>
           <Button
             onPress={step === 3 ? onSubmit : nextStep}
@@ -186,9 +188,9 @@ export const GroupForm = React.memo(
           >
             {step === 3
               ? props.type === "create"
-                ? "Create"
-                : "Update"
-              : "Next"}
+                ? t("Create")
+                : t("Update")
+              : t("Next")}
           </Button>
         </View>
       );
@@ -200,6 +202,7 @@ export const GroupForm = React.memo(
       props.type,
       selectedContact.length,
       step,
+      t,
       text.length,
     ]);
 
@@ -251,7 +254,7 @@ export const GroupForm = React.memo(
           buttonColor={Colors.lightBlue900}
           textColor={Colors.white}
         >
-          {props.type === "create" ? "Create group" : "Edit"}
+          {props.type === "create" ? t("ADD_GROUP") : t("EDIT")}
         </Button>
         <Portal>
           <Modal
@@ -283,7 +286,7 @@ export const GroupForm = React.memo(
                 {step === 2 && (
                   <>
                     <TextInput
-                      label="Group name"
+                      label={t("GROUP_NAME")}
                       value={text}
                       onChangeText={(text) => setText(text)}
                       style={{ marginBottom: 5 }}
@@ -313,7 +316,7 @@ export const GroupForm = React.memo(
                           fontSize: 18,
                         }}
                       >
-                        Group Name: {text}
+                        {t("GROUP_NAME")}: {text}
                       </Text>
                       <Text
                         style={{
@@ -322,7 +325,7 @@ export const GroupForm = React.memo(
                           fontSize: 18,
                         }}
                       >
-                        count: {selectedContact.length}
+                        {t("Count")}: {selectedContact.length}
                       </Text>
                     </View>
                     {ContactsView}

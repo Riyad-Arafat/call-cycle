@@ -10,9 +10,11 @@ import {
 import { Contact } from "@typings/types";
 import { View } from "react-native";
 import useGlobal from "@hooks/useGlobal";
+import { useTranslation } from "@hooks/useTranslation";
 
 export const DeleteContact = React.memo(
   ({ onPress, contact }: { contact: Contact; onPress: () => void }) => {
+    const { t } = useTranslation();
     const { on_opreation: disabled } = useGlobal();
 
     const [visible, setVisible] = React.useState(false);
@@ -51,7 +53,7 @@ export const DeleteContact = React.memo(
                 marginBottom: 20,
               }}
             >
-              Are you sure you want to delete
+              {t("Are you sure you want to delete")}
             </Text>
 
             <Text
@@ -78,22 +80,30 @@ export const DeleteContact = React.memo(
                 onPress={handleDelete}
                 buttonColor={Colors.red500}
                 icon="delete"
+                style={{ width: "45%" }}
                 mode="contained"
               >
-                Delete
+                {t("DELETE")}
               </Button>
               <Button
                 onPress={handleCancel}
                 mode="outlined"
                 buttonColor={Colors.green400}
+                style={{ width: "45%" }}
+                textColor="white"
               >
-                Cancel
+                {t("CANCEL")}
               </Button>
             </View>
           </Modal>
         </Portal>
         <IconButton
-          style={{ marginHorizontal: 0 }}
+          style={{
+            marginHorizontal: 0,
+            backgroundColor: !contact.disabled
+              ? Colors.grey300
+              : Colors.grey100,
+          }}
           icon={"delete"}
           iconColor={Colors.red500}
           onPress={showModal}

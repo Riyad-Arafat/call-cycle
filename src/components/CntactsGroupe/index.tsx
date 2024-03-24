@@ -1,17 +1,16 @@
 import React, { memo } from "react";
 import { Avatar, MD2Colors as Colors, List } from "react-native-paper";
 import Button from "react-native-paper/src/components/Button/Button";
-import { useGlobal } from "@hooks/useGlobal";
 import { IGroup } from "@typings/group";
 import { Link } from "expo-router";
 import { FlatList } from "react-native";
+import { useTranslation } from "@hooks/useTranslation";
 
-const ContactsGroupe = memo(() => {
-  const { groupes } = useGlobal();
+const ContactsGroupe = memo(({ groupes }: { groupes: IGroup[] }) => {
   return (
     <>
       <FlatList
-        data={[...groupes, ...groupes, ...groupes]}
+        data={[...groupes]}
         renderItem={({ item }) => <GroupItem group={item} />}
         keyExtractor={(item, index) =>
           `${item.id}+${item.name}-${item.contacts.length}-${index}`
@@ -22,6 +21,7 @@ const ContactsGroupe = memo(() => {
 });
 
 const GroupItem = ({ group }: { group: IGroup }) => {
+  const { t } = useTranslation();
   return (
     <List.Accordion
       id={`${group.id}+${group.name}`}
@@ -42,9 +42,9 @@ const GroupItem = ({ group }: { group: IGroup }) => {
         />
       )}
       right={() => (
-        <Link href={`group/${group.id}`}>
+        <Link href={`/app/group/${group.id}`}>
           <Button mode="contained" buttonColor={Colors.lightBlue900}>
-            Open
+            {t("View")}
           </Button>
         </Link>
       )}

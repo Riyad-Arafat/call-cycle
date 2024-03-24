@@ -1,0 +1,35 @@
+import { TranslationKeys } from "@i18n/i18n";
+
+const en: TranslationKeys = {
+  WELCOME: "Welcome",
+  GET_STARTED: "Get Started",
+  LOGIN: "Login",
+  REGISTER: "Register",
+  EMAIL: "Email",
+  PASSWORD: "Password",
+  CONFIRM_PASSWORD: "Confirm Password",
+  FORGOT_PASSWORD: "Forgot Password?",
+  NO_ACCOUNT: "Don't have an account?",
+  SIGNUP: "Sign Up",
+  SIGNIN: "Sign In",
+  PHONE_NUMBER: "Phone Number",
+  NAME: "Name",
+  GROUP: "Group",
+  GROUPS: "Groups",
+  ADD_GROUP: "Add Group",
+  EDIT: "Edit",
+  DELETE: "Delete",
+  SAVE: "Save",
+  CANCEL: "Cancel",
+  LOGOUT: "Logout",
+  ADD: "Add",
+  ADD_CONTACT: "Add Contact",
+  CONTACTS: "Contacts",
+  CONTACT: "Contact",
+  PHONE: "Phone",
+  SKIP: "Skip",
+  "SIGNUP TO THE APP": "Sign Up to the App",
+  CHANGE_LANGUAGE_TO: "Change Language to {{target}}",
+};
+
+export default en;

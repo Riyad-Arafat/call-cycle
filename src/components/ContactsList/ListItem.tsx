@@ -5,13 +5,15 @@ import {
   Checkbox,
   MD2Colors as Colors,
   Button,
+  IconButton,
 } from "react-native-paper";
 import StartSubCycle from "@components/Actions/StartSubCycle";
 import Call from "@components/Actions/Call";
 import DeleteContact from "@components/Actions/DeleteContact";
 import { Contact } from "@typings/types";
-import { View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import useGlobal from "@hooks/useGlobal";
+import { useTranslation } from "@hooks/useTranslation";
 
 interface Props {
   contact: Contact;
@@ -53,6 +55,8 @@ const ListItem = React.memo(
           label={contact.name.charAt(0).toUpperCase()}
           style={{
             backgroundColor: Colors.grey600,
+            marginTop: 10,
+            marginStart: 10,
           }}
         />
       ),
@@ -62,27 +66,26 @@ const ListItem = React.memo(
     const renderRight = useCallback(() => {
       if (porpuse === "call")
         return (
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              width: "50%",
-            }}
-          >
-            <StartSubCycle onPress={StartSubCycleFun} />
+          <View style={styles.buttonContainer}>
+            <StartSubCycle onPress={StartSubCycleFun} contact={contact} />
             <Call contact={contact} />
             <DeleteContact
               contact={contact}
               onPress={() => removeContact(contact)}
             />
-            <Button
+            <IconButton
               onPress={() => toggleDisable(contact)}
-              textColor={contact.disabled ? Colors.green500 : Colors.red500}
-              style={{ marginHorizontal: 0 }}
+              // textColor={contact.disabled ? Colors.green500 : Colors.red500}
               disabled={disabled}
-            >
-              {contact.disabled ? "Enable" : "Disable"}
-            </Button>
+              style={{
+                backgroundColor: !contact.disabled
+                  ? Colors.grey300
+                  : Colors.grey100,
+                marginHorizontal: 0,
+              }}
+              icon={contact.disabled ? "lock" : "lock-open"}
+              iconColor={!contact.disabled ? Colors.green500 : Colors.red500}
+            />
           </View>
         );
 
@@ -115,12 +118,17 @@ const ListItem = React.memo(
         }
         onPress={handelOnPress}
         titleStyle={{
-          fontSize: 15,
+          fontSize: 16,
           fontWeight: "bold",
+        }}
+        descriptionStyle={{
+          fontSize: 15,
         }}
         style={{
           backgroundColor: contact.disabled ? Colors.grey300 : Colors.white,
-          paddingStart: 20,
+          borderBottomWidth: 1,
+          borderBottomColor: Colors.grey600,
+          flexDirection: "row",
         }}
         left={renderLeft}
         right={renderRight}
@@ -140,3 +148,14 @@ const ListItem = React.memo(
 );
 
 export default ListItem;
+
+const styles = StyleSheet.create({
+  buttonContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    maxWidth: "50%",
+    overflow: "hidden",
+    gap: 5,
+  },
+});

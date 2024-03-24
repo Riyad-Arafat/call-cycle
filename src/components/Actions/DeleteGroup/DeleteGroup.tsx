@@ -9,6 +9,7 @@ import {
 } from "react-native-paper";
 import { useGlobal } from "@hooks/useGlobal";
 import { IGroup } from "@typings/group";
+import { useTranslation } from "@hooks/useTranslation";
 
 interface DefaultProps {
   group: IGroup;
@@ -20,6 +21,7 @@ export const DeleteGroup = React.memo(
   ({ disabled, group, onSucess }: DefaultProps) => {
     const [visible, setVisible] = React.useState(false);
     const { deleteGroup } = useGlobal();
+    const { t } = useTranslation();
 
     const showModal = () => setVisible(true);
     const hideModal = () => {
@@ -59,7 +61,7 @@ export const DeleteGroup = React.memo(
                 marginBottom: 20,
               }}
             >
-              Are you sure you want to delete
+              {t("Are you sure you want to delete this group?")}
             </Text>
             <Text
               style={{
@@ -85,15 +87,18 @@ export const DeleteGroup = React.memo(
                 buttonColor={Colors.red500}
                 icon="delete"
                 mode="contained"
+                style={{ width: "45%" }}
               >
-                Delete
+                {t("Delete")}
               </Button>
               <Button
                 onPress={handleCancel}
                 mode="outlined"
                 buttonColor={Colors.green400}
+                style={{ width: "45%" }}
+                textColor="white"
               >
-                Cancel
+                {t("Cancel")}
               </Button>
             </View>
           </Modal>
@@ -105,7 +110,7 @@ export const DeleteGroup = React.memo(
           disabled={disabled}
           onPress={showModal}
         >
-          Delete
+          {t("Delete")}
         </Button>
       </>
     );

@@ -5,7 +5,8 @@
     "app/**/*"
   ],
   "compilerOptions": {
-    "module": "esnext",
+    "module": "commonjs",
+    "esModuleInterop": true,
     "baseUrl": ".",
     "paths": {
       "@components/*": [
@@ -40,6 +41,9 @@
       ],
       "@constants/*": [
         "src/constants/*"
+      ],
+      "@i18n/*": [
+        "src/i18n/*"
       ],
     }
   }

@@ -9,7 +9,6 @@ export const Call = React.memo(({ contact }: { contact: Contact }) => {
 
   const startCall = useCallback(() => {
     try {
-      console.log(contact);
       if (contact.phoneNumbers && contact.phoneNumbers[0].number) {
         SendIntentAndroid.sendPhoneCall(contact.phoneNumbers[0].number, true);
       }
@@ -20,7 +19,10 @@ export const Call = React.memo(({ contact }: { contact: Contact }) => {
 
   return (
     <IconButton
-      style={{ marginHorizontal: 0 }}
+      style={{
+        marginHorizontal: 0,
+        backgroundColor: !contact.disabled ? Colors.grey300 : Colors.grey100,
+      }}
       icon={"phone"}
       iconColor={Colors.green500}
       onPress={startCall}

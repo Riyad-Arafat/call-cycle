@@ -11,6 +11,7 @@ import { View } from "react-native";
 import { Button, MD2Colors as Colors } from "react-native-paper";
 import { Stack } from "expo-router";
 import { Contact } from "@typings/types";
+import { useTranslation } from "@hooks/useTranslation";
 
 export default function Group() {
   const { id } = useLocalSearchParams();
@@ -47,9 +48,9 @@ export default function Group() {
     [group, updateGroup]
   );
 
-  const onToggleDisable = useCallback(
-    (contact: Contact) => {
-      if (contact.phoneNumbers) {
+  const onToggleDisable = useCallback((contact: Contact) => {
+    if (contact.phoneNumbers) {
+      setGroup((group) => {
         const newChecked = group.contacts.map((c) => {
           if (
             c.phoneNumbers &&
@@ -58,34 +59,37 @@ export default function Group() {
             return { ...c, disabled: !c.disabled };
           return c;
         });
-        setGroup({ ...group, contacts: newChecked });
-      }
-    },
-    [group]
-  );
+        return { ...group, contacts: newChecked };
+      });
+    }
+  }, []);
 
-  if (!group)
-    return (
-      <>
-        <Stack.Screen options={{ title: "Group" }} />
-        <Loading />
-      </>
-    );
   return (
     <>
-      <Stack.Screen options={{ title: `${group?.name}` }} />
+      <Stack.Screen
+        options={{
+          title: group?.name || "Group",
+          header: !group ? () => null : undefined,
+        }}
+      />
 
-      <ActionsHeader
-        group={group}
-        startCallCycle={startCallCycle}
-        onUpadteSuccess={getGroup}
-      />
-      <ContactsList
-        contactsList={group.contacts}
-        porpuse="call"
-        onDeleteContact={onDeleteContact}
-        onToggleDisable={onToggleDisable}
-      />
+      {!group ? (
+        <Loading />
+      ) : (
+        <>
+          <ActionsHeader
+            group={group}
+            startCallCycle={startCallCycle}
+            onUpadteSuccess={getGroup}
+          />
+          <ContactsList
+            contactsList={group.contacts}
+            porpuse="call"
+            onDeleteContact={onDeleteContact}
+            onToggleDisable={onToggleDisable}
+          />
+        </>
+      )}
     </>
   );
 }
@@ -103,6 +107,7 @@ const ActionsHeader = ({
 }: IActionsHeader) => {
   const { on_opreation } = useGlobal();
   const router = useRouter();
+  const { t } = useTranslation();
 
   useEffect(() => {
     console.log("group FROM ActionsHeader", group);
@@ -125,7 +130,7 @@ const ActionsHeader = ({
         buttonColor={Colors.green500}
         onPress={startCallCycle}
       >
-        Start
+        {t("Start Call loop")}
       </Button>
       <DeleteGroup
         disabled={on_opreation}

@@ -1,89 +1,140 @@
-import React, { useState } from "react";
-import { View } from "react-native";
-import {
-  Button,
-  TextInput,
-  Title,
-  ActivityIndicator,
-} from "react-native-paper";
+import React, { useCallback, useEffect, useState } from "react";
+import { Alert, View } from "react-native";
+import { Title, TextInput } from "react-native-paper";
 import { login, saveUser } from "@apis/index";
-import useGlobal from "@hooks/useGlobal";
-import { router } from "expo-router";
+import { Stack, router } from "expo-router";
+import Button from "react-native-paper/src/components/Button/Button";
+import {
+  PhoneNumberInput,
+  getCountryByCode,
+} from "react-native-paper-phone-number-input";
+
+import parsePhoneNumber, { isValidPhoneNumber } from "libphonenumber-js";
+import { useTranslation } from "@hooks/useTranslation";
 
 const Login = () => {
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const { t } = useTranslation();
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { setUser } = useGlobal();
+  const [countryCode, setCountryCode] = useState<string>("EG"); // Default country code
+  const [phoneNumber, setPhoneNumber] = useState<string>();
+  const [isDisabled, setIsDisabled] = useState(true);
 
-  const handleLogin = async () => {
-    setIsLoading(true);
+  const handleLogin = useCallback(async () => {
+    const { dialCode } = getCountryByCode(countryCode); // Get country details
+    const phoneWithCode = `${dialCode}${phoneNumber}`;
+
     try {
-      console.log(`Phone Number ${phoneNumber}, Password: ${password}`);
-      const user = await login(phoneNumber, password);
+      setIsLoading(true);
+      const parsedPhoneNumber = parsePhoneNumber(phoneWithCode);
+      if (!isValidPhoneNumber(phoneNumber, parsedPhoneNumber.country)) {
+        throw new Error("ًWrongPhoneNumber");
+      }
+
+      const user = await login(phoneWithCode, password);
 
       if (user) {
         await saveUser(user);
-        setUser(user as any);
-        router.navigate("/contactas");
+        router.navigate("/app");
+      } else {
+        throw new Error("LoginFailed");
       }
-      // Handle login logic here
-      // If login is successful, set isLoggedIn to true
     } catch (error) {
       console.log(error);
+      Alert.alert(
+        t("ERROR"),
+        t(getErrorMessages(error?.message)) || t("unKnownError")
+      );
     } finally {
+      console.log("Done");
       setIsLoading(false);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countryCode, phoneNumber, password]);
+
+  useEffect(() => {
+    if (phoneNumber && password) {
+      setIsDisabled(false);
+    } else {
+      setIsDisabled(true);
+    }
+  }, [phoneNumber, password]);
 
   return (
-    <View
-      style={{
-        padding: 16,
-        backgroundColor: "#f5f5f5",
-        flex: 1,
-        justifyContent: "center",
-      }}
-    >
-      <Title
+    <>
+      <Stack.Screen options={{ header: () => null }} />
+      <View
         style={{
-          marginBottom: 20,
-          textAlign: "center",
-          fontSize: 24,
-          color: "#6200ee",
+          padding: 16,
+          backgroundColor: "#f5f5f5",
+          flex: 1,
+          justifyContent: "center",
         }}
       >
-        Login
-      </Title>
-      <TextInput
-        label="Phone Number"
-        mode="outlined"
-        keyboardType="phone-pad"
-        onChangeText={setPhoneNumber}
-        value={phoneNumber}
-        style={{ marginBottom: 10, backgroundColor: "white" }}
-      />
-      <TextInput
-        label="Password"
-        mode="outlined"
-        secureTextEntry
-        onChangeText={setPassword}
-        value={password}
-        style={{ marginBottom: 20, backgroundColor: "white" }}
-      />
-      <Button
-        mode="contained"
-        onPress={handleLogin}
-        style={{ padding: 10, borderRadius: 25 }}
-      >
-        {isLoading ? (
-          <ActivityIndicator animating={true} color={"white"} />
-        ) : (
-          "Login"
-        )}
-      </Button>
-    </View>
+        <Title
+          style={{
+            marginBottom: 20,
+            textAlign: "center",
+            fontSize: 24,
+          }}
+        >
+          {t("LOGIN")}
+        </Title>
+
+        <PhoneNumberInput
+          label={t("PHONE_NUMBER")}
+          code={countryCode}
+          setCode={setCountryCode}
+          phoneNumber={phoneNumber}
+          setPhoneNumber={setPhoneNumber}
+        />
+
+        <TextInput
+          label={t("PASSWORD")}
+          secureTextEntry
+          onChangeText={setPassword}
+          value={password}
+          style={{ marginVertical: 20 }}
+        />
+
+        <View
+          style={{
+            marginBottom: 20,
+            flexDirection: "column",
+            gap: 10,
+          }}
+        >
+          <Button
+            mode="contained"
+            onPress={handleLogin}
+            style={{ padding: 10, borderRadius: 25 }}
+            disabled={isDisabled}
+            loading={isLoading}
+          >
+            {t("LOGIN")}
+          </Button>
+
+          <Button onPress={() => router.navigate("/signup")} mode="text">
+            {t("NO_ACCOUNT")}
+          </Button>
+        </View>
+      </View>
+    </>
   );
 };
 
 export default Login;
+
+const getErrorMessages = (error: string) => {
+  if (error.includes("phone_number") || error.includes("ًWrongPhoneNumber")) {
+    return "ًWrongPhoneNumber";
+  }
+  if (error.includes("password") || error.includes("ًWrongPassword")) {
+    return "ًWrongPassword";
+  }
+  if (error.includes("LoginFailed")) {
+    return "LoginFailed";
+  }
+
+  return error || "unKnownError";
+};

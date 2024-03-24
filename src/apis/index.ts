@@ -2,12 +2,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { IGroup } from "@typings/group";
 import { IUser } from "@typings/types";
 import { sortContacts } from "@utils/index";
-import { createClient } from "@vercel/postgres";
+import { createPool } from "@vercel/postgres";
 import { Contact } from "expo-contacts";
 import * as Contacts from "expo-contacts";
 
-const client = createClient({
-  connectionString: process.env.EXPO_PUBLIC_POSTGRES_URL_NON_POOLING,
+const client = createPool({
+  connectionString: process.env.EXPO_PUBLIC_POSTGRES_URL,
 });
 
 /// get all contacts groupes from storage
@@ -141,9 +141,45 @@ export const getUser = async (): Promise<IUser | null> => {
 };
 
 export const login = async (phoneNumber: string, password: string) => {
+  client.connect();
   const { rows } =
     await client.sql`SELECT * FROM users WHERE phone_number = ${phoneNumber} AND password = ${password}`;
+  const user = rows.length > 0 ? rows[0] : null;
+  return user;
+};
+
+export const register = async ({
+  phoneNumber,
+  password,
+  firstName,
+  lastName,
+}: {
+  phoneNumber: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}) => {
+  let username = `${firstName}${lastName}`
+    .toLowerCase()
+    .trim()
+    .replace(" ", "");
+  username = `${username}${Math.floor(Math.random() * 1000)}`;
+  username = username.length > 20 ? username.slice(0, 20) : username;
+  client.connect();
+  const { rows } = await client.sql`
+    INSERT INTO users (phone_number, password, first_name, last_name, username)
+    VALUES (${phoneNumber}, ${password}, ${firstName}, ${lastName}, ${username})
+    RETURNING *`;
 
   const user = rows.length > 0 ? rows[0] : null;
   return user;
+};
+
+export const logout = async () => {
+  try {
+    await AsyncStorage.removeItem("@user");
+  } catch (e) {
+    // error reading value
+    throw new Error(e);
+  }
 };

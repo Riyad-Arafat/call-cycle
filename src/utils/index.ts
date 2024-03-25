@@ -1,5 +1,7 @@
 import { Contact as ExpoContact } from "expo-contacts";
 import { Contact } from "@typings/types";
+import { PermissionsAndroid } from "react-native";
+import { t } from "i18next";
 
 export const search_fun = (contacts: Contact[], search: string) => {
   const data = contacts.reduce((acc, item) => {
@@ -52,4 +54,23 @@ export const sortContacts = async (importedContacts: ExpoContact[]) => {
 // remove space from string
 export const removeSpace = (str: string) => {
   return str.replace(/\s/g, "");
+};
+
+// function to get the permission to make calls
+export const getCallPermission = async () => {
+  const granted = await PermissionsAndroid.request(
+    PermissionsAndroid.PERMISSIONS.CALL_PHONE,
+    {
+      title: t("Permission Required"),
+      message: t("This app needs access to your phone to make calls"),
+      buttonNegative: t("Cancel"),
+      buttonPositive: t("OK"),
+    }
+  );
+
+  if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+    return true;
+  } else {
+    return false;
+  }
 };

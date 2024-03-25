@@ -28,11 +28,10 @@ export const DeleteGroup = React.memo(
       setVisible(false);
     };
 
-    const handleDelete = () => {
-      deleteGroup(group.id, () => {
-        hideModal();
-        onSucess?.();
-      });
+    const handleDelete = async () => {
+      await deleteGroup(group.id);
+      onSucess?.();
+      hideModal();
     };
 
     const handleCancel = () => {

@@ -7,21 +7,23 @@ import Loading from "@components/Loading";
 import ContactsGroupe from "@components/CntactsGroupe";
 import useGlobal from "@hooks/useGlobal";
 import { useTranslation } from "react-i18next";
+import { useIsFocused } from "@react-navigation/native";
 
 const GroupForm = React.lazy(() => import("@components/Actions/GroupForm"));
 
 export default function Home() {
   const { t } = useTranslation();
+  const isFocused = useIsFocused();
   const [loading, setLoading] = React.useState(true);
   const [groupes, setGroupes] = React.useState([]);
+  const { set_groups_count } = useGlobal();
 
   const getData = useCallback(async () => {
     setLoading(true);
-    console.log("getData");
     try {
       const data = await getContactsGroups();
-      console.log("data", data);
       setGroupes(data);
+      set_groups_count(data.length);
     } catch (e) {
       // error reading value
       console.log(e);
@@ -40,7 +42,10 @@ export default function Home() {
   useEffect(() => {
     const backAction = () => {
       console.log("Back button pressed");
-      return true; // This will prevent the app from closing
+      if (isFocused) {
+        return true; // This will prevent the app from closing
+      }
+      return false;
     };
 
     const backHandler = BackHandler.addEventListener(
@@ -49,7 +54,7 @@ export default function Home() {
     );
 
     return () => backHandler.remove();
-  }, []);
+  }, [isFocused]);
 
   return (
     <View>

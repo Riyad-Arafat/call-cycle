@@ -12,12 +12,14 @@ import { getGroupById } from "@apis/index";
 import Loading from "@components/Loading";
 import Searchbar from "@components/Searchbar";
 import { useGlobal } from "@hooks/useGlobal";
-import { Contact } from "@typings/types";
+import { Contact, plans } from "@typings/types";
 import { IGroup } from "@typings/group";
 import { useCallback } from "react";
 import { search_fun } from "@utils/index";
 import { FlatList, View } from "react-native";
 import { useTranslation } from "@hooks/useTranslation";
+import { useSession } from "@context/Session";
+import PlanSubscriptionModal from "@components/PlanSubscriptionModal";
 
 interface DefaultProps {
   onDismiss?: () => void;
@@ -34,16 +36,38 @@ export const GroupForm = React.memo(
     const [visible, setVisible] = React.useState(false);
     const [loading, setLoading] = React.useState(true);
     const [selectedContact, setSelectedContact] = React.useState<Contact[]>([]);
-    const [text, setText] = React.useState(
-      props.type === "upadte" ? props.group.name : ""
-    );
+    const [text, setText] = React.useState("");
     const {
       contacts: importedContacts,
       updateGroup,
       addGroup,
       on_opreation,
+      groups_count,
     } = useGlobal();
 
+    const { user } = useSession();
+
+    const { isAbleToAddGroup, isAbleToAddMoreContacts } = React.useMemo(() => {
+      const res = {
+        isAbleToAddGroup: false,
+        isAbleToAddMoreContacts: false,
+      };
+      if (user?.plan) {
+        const plan = plans[user.plan.name ?? "Free"];
+        console.log("User Plan FROM GROUP FORM:", user?.plan.name);
+        console.log("Plan FROM GROUP FORM:", plan);
+        console.log("Groups Count FROM GROUP FORM:", groups_count);
+        console.log(
+          "Selected Contact FROM GROUP FORM:",
+          selectedContact.length
+        );
+
+        res.isAbleToAddGroup = plan.max_groups > groups_count;
+        res.isAbleToAddMoreContacts =
+          plan.max_contacts_per_group > selectedContact.length;
+      }
+      return res;
+    }, [groups_count, selectedContact.length, user.plan]);
     const [contacts, setContacts] = React.useState<Contact[]>(importedContacts);
 
     React.useEffect(() => {
@@ -60,24 +84,23 @@ export const GroupForm = React.memo(
       hideModal();
     };
 
-    const storeData = useCallback(() => {
+    const storeData = useCallback(async () => {
       if (selectedContact) setLoading(true);
-      if (props.type === "create") addGroup(text, selectedContact);
+      if (props.type === "create") await addGroup(text, selectedContact);
+      onSucess?.();
       onHidden();
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [props.type, selectedContact, text]);
 
-    const updateContacts = useCallback(() => {
+    const updateContacts = useCallback(async () => {
       if (selectedContact) setLoading(true);
       if (props.type === "upadte")
-        updateGroup(
-          {
-            id: props.group.id,
-            name: text,
-            contacts: selectedContact,
-          },
-          onSucess
-        );
+        await updateGroup({
+          id: props.group.id,
+          name: text,
+          contacts: selectedContact,
+        });
+      onSucess?.();
       onHidden();
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [props.type, selectedContact, text]);
@@ -112,11 +135,16 @@ export const GroupForm = React.memo(
     }, [prepareState]);
 
     const openModal = React.useCallback(() => {
+      if (!isAbleToAddGroup && props.type === "create") {
+        setPlanModalVisible(true);
+        return;
+      }
       setVisible(true);
-    }, []);
+    }, [isAbleToAddGroup, props.type]);
 
     const hideModal = React.useCallback(() => {
       setVisible(false);
+      setPlanModalVisible(false);
       onDismiss?.();
       setText("");
       setSelectedContact([]);
@@ -242,6 +270,8 @@ export const GroupForm = React.memo(
       );
     }, [selectedContact]);
 
+    const [isPlanModalVisible, setPlanModalVisible] = React.useState(false);
+
     return (
       <>
         <Button
@@ -251,11 +281,16 @@ export const GroupForm = React.memo(
           mode="outlined"
           disabled={on_opreation}
           onPress={openModal}
-          buttonColor={Colors.lightBlue900}
-          textColor={Colors.white}
+          buttonColor={isAbleToAddGroup ? Colors.lightBlue700 : Colors.grey200}
+          textColor={isAbleToAddGroup ? Colors.white : Colors.grey600}
         >
           {props.type === "create" ? t("ADD_GROUP") : t("EDIT")}
         </Button>
+
+        <PlanSubscriptionModal
+          isVisible={isPlanModalVisible}
+          onClose={hideModal}
+        />
         <Portal>
           <Modal
             visible={visible}
@@ -274,11 +309,11 @@ export const GroupForm = React.memo(
                 {step === 1 && (
                   <>
                     <Searchbar onChangeText={onSearch} />
-                    <ContactsList
+                    <ContactsList.Selector
                       contactsList={contacts}
-                      selectedContacts={selectedContact}
-                      porpuse="select"
+                      selectedContacts={selectedContact || []}
                       onCheck={onCheck}
+                      isAbleToAddMoreContacts={isAbleToAddMoreContacts}
                     />
                     {Buttons}
                   </>

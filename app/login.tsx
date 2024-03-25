@@ -27,11 +27,12 @@ const Login = () => {
     try {
       setIsLoading(true);
       const parsedPhoneNumber = parsePhoneNumber(phoneWithCode);
+
       if (!isValidPhoneNumber(phoneNumber, parsedPhoneNumber.country)) {
         throw new Error("ًWrongPhoneNumber");
       }
 
-      const user = await login(phoneWithCode, password);
+      const user = await login(parsedPhoneNumber.number, password);
 
       if (user) {
         await saveUser(user);
@@ -43,7 +44,7 @@ const Login = () => {
       console.log(error);
       Alert.alert(
         t("ERROR"),
-        t(getErrorMessages(error?.message)) || t("unKnownError")
+        t(getErrorMessages(error?.message) as any) || t("unKnownError")
       );
     } finally {
       console.log("Done");

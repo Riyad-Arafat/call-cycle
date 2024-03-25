@@ -60,6 +60,38 @@ const ar = {
   Create: "إنشاء",
   Back: "العودة",
   "Search by name or phone number": "البحث بالاسم أو رقم الهاتف",
+
+  FREE_PLAN: "خطة مجانية",
+  FREE_PLAN_DESCRIPTION:
+    "مجموعة واحدة (بدون نسخ احتياطي في السحابة) و 5 جهات اتصال لكل مجموعة",
+  BASIC_PLAN: "خطة أساسية",
+  BASIC_PLAN_DESCRIPTION:
+    "5 مجموعات (نسخ احتياطي في السحابة) و 15 جهة اتصال لكل مجموعة",
+  PRO_PLAN: "خطة احترافية",
+  PRO_PLAN_DESCRIPTION:
+    "10 مجموعات (نسخ احتياطي في السحابة) و 50 جهة اتصال لكل مجموعة",
+  ULTRA_PLAN: "خطة غير محدودة",
+  ULTRA_PLAN_DESCRIPTION:
+    "مجموعات غير محدودة (نسخ احتياطي في السحابة) و جهات اتصال غير محدودة لكل مجموعة",
+
+  "Your current plan": "خطتك الحالية",
+  "Choose Your Plan": "اختر خطتك",
+  "per month": "شهريا",
+  "Subscribe Now": "اشترك الآن",
+  "Upgrade Plan": "ترقية الخطة",
+  "You have reached the limit of contacts":
+    "لقد وصلت إلى الحد الأقصى لجهات الاتصال",
+  "Permission Required": "الوصول مرفوض",
+  "Please allow the app to access your contacts":
+    "يرجى السماح للتطبيق بالوصول إلى جهات الاتصال الخاصة بك",
+  "This app needs access to your contacts":
+    "هذا التطبيق يحتاج إلى الوصول إلى جهات الاتصال الخاصة بك",
+  "This app needs access to your phone to make calls":
+    "هذا التطبيق يحتاج إلى الوصول إلى هاتفك لإجراء المكالمات",
+  OK: "حسنا",
+  "Permission Denied": "الوصول مرفوض",
+  "You need to allow the app to make calls":
+    "تحتاج إلى السماح للتطبيق بإجراء المكالمات",
 };
 
 export default ar;

@@ -62,7 +62,7 @@ const SignupScreen = () => {
       const user = await register({
         firstName,
         lastName,
-        phoneNumber: phoneWithCode,
+        phoneNumber: parsedPhoneNumber.number,
         password,
       });
       if (user) {
@@ -75,7 +75,7 @@ const SignupScreen = () => {
       console.log(error);
       Alert.alert(
         "Error",
-        t(getErrorMessages(error?.message)) || t("unKnownError")
+        t(getErrorMessages(error?.message) as any) || t("unKnownError")
       );
     } finally {
       setIsSubmitting(false);

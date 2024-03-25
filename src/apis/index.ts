@@ -130,7 +130,7 @@ export const saveUser = async (data: any) => {
 };
 
 // get user data from storage
-export const getUser = async (): Promise<IUser | null> => {
+export const getLocalUser = async (): Promise<IUser | null> => {
   try {
     const userData = await AsyncStorage.getItem("@user");
     return userData != null ? JSON.parse(userData) : null;
@@ -144,10 +144,30 @@ export const login = async (phoneNumber: string, password: string) => {
   client.connect();
   const { rows } =
     await client.sql`SELECT * FROM users WHERE phone_number = ${phoneNumber} AND password = ${password}`;
-  const user = rows.length > 0 ? rows[0] : null;
-  return user;
+  const record = rows.length > 0 ? rows[0] : null;
+
+  if (record) {
+    const user = { ...record } as IUser;
+    const userPlan = await getUserPlanDetails(user.id);
+    user.plan = userPlan as any;
+    return user;
+  }
+  return null;
 };
 
+const getUserPlanDetails = async (userId: string) => {
+  console.log("userId", userId);
+  client.connect();
+  const { rows } = await client.sql`
+    SELECT user_plans.*, plans.* 
+    FROM user_plans 
+    INNER JOIN plans ON user_plans.plan_id = plans.id 
+    WHERE user_plans.user_id = ${userId}`;
+
+  console.log("rows", rows);
+  const userPlanDetails = rows.length > 0 ? rows[0] : null;
+  return userPlanDetails;
+};
 export const register = async ({
   phoneNumber,
   password,
@@ -182,4 +202,10 @@ export const logout = async () => {
     // error reading value
     throw new Error(e);
   }
+};
+
+export const getAvailablePlans = async () => {
+  client.connect();
+  const { rows } = await client.sql`SELECT * FROM plans`;
+  return rows;
 };

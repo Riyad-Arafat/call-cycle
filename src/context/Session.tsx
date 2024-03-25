@@ -1,4 +1,4 @@
-import { getUser } from "@apis/index";
+import { getLocalUser } from "@apis/index";
 import { IUser } from "@typings/types";
 import React, { useCallback } from "react";
 
@@ -28,9 +28,8 @@ export function SessionProvider(props: React.PropsWithChildren) {
 
   const getAuthedUser = useCallback(async () => {
     setIsLoading(true);
-    console.log("getAuthedUser");
     try {
-      const res = await getUser();
+      const res = await getLocalUser();
       if (res) {
         setUser(res);
       }
@@ -38,7 +37,6 @@ export function SessionProvider(props: React.PropsWithChildren) {
       console.error(error);
     } finally {
       setIsLoading(false);
-      console.log("Done");
     }
   }, []);
 

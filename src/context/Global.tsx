@@ -2,7 +2,7 @@ import React, { useCallback, useRef, useImperativeHandle } from "react";
 import { Alert, AppState, TouchableOpacity } from "react-native";
 import { Contact } from "../typings/types";
 import * as Contacts from "expo-contacts";
-import { sortContacts } from "../utils";
+import { getCallPermission, sortContacts } from "../utils";
 import Loading from "../components/Loading";
 import {
   deleteGroup as deleteGroupAPI,
@@ -21,12 +21,14 @@ import { useTranslation } from "@hooks/useTranslation";
 
 interface Props {
   contacts: Contact[];
-  updateGroup: (group: IGroup, callback?: () => void) => Promise<void>;
-  deleteGroup: (group_id: string, callback?: () => void) => Promise<void>;
+  updateGroup: (group: IGroup) => Promise<void>;
+  deleteGroup: (group_id: string) => Promise<void>;
   addGroup: (name: string, contacts: Contacts.Contact[]) => Promise<void>;
   startCallCycle: (contacts: Contact[]) => Promise<void>;
   on_opreation: boolean;
   toggleMenu: () => void;
+  groups_count: number;
+  set_groups_count: (count: number) => void;
 }
 
 export const GlobalContext = React.createContext<Props>({
@@ -37,11 +39,15 @@ export const GlobalContext = React.createContext<Props>({
   startCallCycle: async () => {},
   on_opreation: false,
   toggleMenu: () => {},
+  groups_count: 0,
+  set_groups_count: () => {},
 });
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
+  const { t } = useTranslation();
+  const [groups_count, setGroupsCount] = React.useState(0);
   const [contacts, setContacts] = React.useState<Contact[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [on_opreation, set_on_opreation] = React.useState(false);
@@ -62,6 +68,7 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
       set_on_opreation(true);
       try {
         await setContactsGroups(name, contacts);
+        setGroupsCount((prev) => prev + 1);
       } catch (error) {
         console.error(error);
       } finally {
@@ -93,6 +100,7 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
     async (group_id: string, callback?: () => void) => {
       try {
         await deleteGroupAPI(group_id);
+        setGroupsCount((prev) => prev - 1);
         callback?.();
       } catch (error) {
         console.error(error);
@@ -108,9 +116,7 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
         fields: [Contacts.Fields.Name, Contacts.Fields.PhoneNumbers],
       });
       if (data.length > 0) {
-        console.log("contacts", data.length);
         const sortedContacts = await sortContacts(data);
-        console.log("sortedContacts", sortedContacts.length);
         setContacts(sortedContacts);
       }
     }
@@ -121,6 +127,12 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
       set_on_opreation(true);
       for (const contact of contacts) {
         try {
+          const granted = await getCallPermission();
+          if (!granted)
+            Alert.alert(
+              t("Permission Denied"),
+              t("You need to allow the app to make calls")
+            );
           if (
             contact.phoneNumbers &&
             !!contact.phoneNumbers[0].number &&
@@ -134,7 +146,7 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
             await wait(5000);
             // await wait until call is finished
             while (appStateVisible !== "active") {
-              await wait(2000);
+              await wait(3000);
             }
           }
         } catch (error) {
@@ -143,7 +155,7 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
       }
       _handelEndOpreation(0);
     },
-    [_handelEndOpreation, appStateVisible]
+    [_handelEndOpreation, appStateVisible, t]
   );
 
   React.useEffect(() => {
@@ -213,6 +225,8 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
         startCallCycle,
         on_opreation,
         toggleMenu,
+        groups_count,
+        set_groups_count: setGroupsCount,
       }}
     >
       <Drawer ref={drawerRef}>{children}</Drawer>
@@ -237,7 +251,6 @@ const Drawer = React.forwardRef(
         closeMenu();
       },
       toggleMenu: () => {
-        console.log("toggleMenu");
         toggleMenu();
       },
     }));
@@ -271,7 +284,6 @@ const Drawer = React.forwardRef(
     }, []);
 
     const toggleMenu = useCallback(() => {
-      console.log("toggleMenu");
       if (isOpenned) {
         closeMenu();
       } else {

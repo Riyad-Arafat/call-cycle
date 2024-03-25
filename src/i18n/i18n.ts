@@ -58,4 +58,25 @@ export interface TranslationKeys {
   "Create": string;
   "Back": string;
   "Search by name or phone number": string;
+  "FREE_PLAN": string;
+  "FREE_PLAN_DESCRIPTION": string;
+  "BASIC_PLAN": string;
+  "BASIC_PLAN_DESCRIPTION": string;
+  "PRO_PLAN": string;
+  "PRO_PLAN_DESCRIPTION": string;
+  "ULTRA_PLAN": string;
+  "ULTRA_PLAN_DESCRIPTION": string;
+  "Your current plan": string;
+  "Choose Your Plan": string;
+  "per month": string;
+  "Subscribe Now": string;
+  "Upgrade Plan": string;
+  "You have reached the limit of contacts": string;
+  "Permission Required": string;
+  "Please allow the app to access your contacts": string;
+  "This app needs access to your contacts": string;
+  "This app needs access to your phone to make calls": string;
+  "OK": string;
+  "Permission Denied": string;
+  "You need to allow the app to make calls": string;
                         }

@@ -61,6 +61,30 @@ const en: TranslationKeys = {
   Create: "Create",
   Back: "Back",
   "Search by name or phone number": "Search by name or phone number",
+  FREE_PLAN_DESCRIPTION: "1 Group (No Cloud Backup) and 5 Contacts per Group",
+  BASIC_PLAN_DESCRIPTION: "5 Groups (Cloud Backup) and 50 Contacts per Group",
+  PRO_PLAN_DESCRIPTION: "10 Groups (Cloud Backup) and 100 Contacts per Group",
+  ULTRA_PLAN_DESCRIPTION:
+    "Unlimited Groups (Cloud Backup) and Unlimited Contacts per Group",
+  FREE_PLAN: "Free Plan",
+  BASIC_PLAN: "Basic Plan",
+  PRO_PLAN: "Pro Plan",
+  ULTRA_PLAN: "Ultra Plan",
+  "Your current plan": "Your current plan",
+  "Choose Your Plan": "Choose Your Plan",
+  "per month": "per month",
+  "Subscribe Now": "Subscribe Now",
+  "Upgrade Plan": "Upgrade Plan",
+  "You have reached the limit of contacts":
+    "You have reached the limit of contacts",
+  "Permission Required": "",
+  "Please allow the app to access your contacts": "",
+  "This app needs access to your contacts": "",
+  "This app needs access to your phone to make calls": "",
+  OK: "OK",
+  "Permission Denied": "Permission Denied",
+  "You need to allow the app to make calls":
+    "You need to allow the app to make calls",
 };
 
 export default en;

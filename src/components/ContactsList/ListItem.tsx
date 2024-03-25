@@ -1,10 +1,9 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   Avatar,
   List,
   Checkbox,
   MD2Colors as Colors,
-  Button,
   IconButton,
 } from "react-native-paper";
 import StartSubCycle from "@components/Actions/StartSubCycle";
@@ -13,40 +12,32 @@ import DeleteContact from "@components/Actions/DeleteContact";
 import { Contact } from "@typings/types";
 import { StyleSheet, View } from "react-native";
 import useGlobal from "@hooks/useGlobal";
-import { useTranslation } from "@hooks/useTranslation";
 
 interface Props {
   contact: Contact;
   isChecked: boolean;
-  removeContact: (contact: Contact) => void;
-  porpuse: "call" | "select";
   onPress?: (contact: Contact) => void;
-  StartSubCycle?: () => void;
-  toggleDisable: (contact: Contact) => void;
+  disabled?: boolean;
 }
 
-const ListItem = React.memo(
-  ({
-    contact,
-    removeContact,
-    porpuse,
-    onPress,
-    isChecked,
-    StartSubCycle: StartSubCycleFun,
-    toggleDisable,
-  }: Props) => {
-    const { on_opreation: disabled } = useGlobal();
+const EditableListItem = React.memo(
+  ({ contact, onPress, isChecked, disabled: passedDisabled }: Props) => {
+    const { on_opreation } = useGlobal();
     const [value, setValue] = React.useState(isChecked);
+
+    const disabled = useMemo(() => {
+      if (on_opreation) return true;
+      return passedDisabled && !isChecked;
+    }, [on_opreation, passedDisabled, isChecked]);
+
     const handelOnPress = useCallback(() => {
-      if (porpuse === "select") {
+      if (disabled) {
+        return;
+      } else {
         setValue((prev) => !prev);
         onPress?.(contact);
       }
-    }, [contact, onPress, porpuse]);
-
-    useEffect(() => {
-      setValue(isChecked);
-    }, [isChecked]);
+    }, [contact, disabled, onPress]);
 
     const renderLeft = useCallback(
       () => (
@@ -64,51 +55,14 @@ const ListItem = React.memo(
     );
 
     const renderRight = useCallback(() => {
-      if (porpuse === "call")
-        return (
-          <View style={styles.buttonContainer}>
-            <StartSubCycle onPress={StartSubCycleFun} contact={contact} />
-            <Call contact={contact} />
-            <DeleteContact
-              contact={contact}
-              onPress={() => removeContact(contact)}
-            />
-            <IconButton
-              onPress={() => toggleDisable(contact)}
-              // textColor={contact.disabled ? Colors.green500 : Colors.red500}
-              disabled={disabled}
-              style={{
-                backgroundColor: !contact.disabled
-                  ? Colors.grey300
-                  : Colors.grey100,
-                marginHorizontal: 0,
-              }}
-              icon={contact.disabled ? "lock" : "lock-open"}
-              iconColor={!contact.disabled ? Colors.green500 : Colors.red500}
-            />
-          </View>
-        );
-
-      if (porpuse === "select")
-        return (
-          <Checkbox
-            status={value ? "checked" : "unchecked"}
-            onPress={handelOnPress}
-            disabled={disabled}
-          />
-        );
-
-      return <></>;
-    }, [
-      StartSubCycleFun,
-      contact,
-      disabled,
-      handelOnPress,
-      porpuse,
-      removeContact,
-      toggleDisable,
-      value,
-    ]);
+      return (
+        <Checkbox
+          status={value ? "checked" : "unchecked"}
+          onPress={handelOnPress}
+          disabled={disabled}
+        />
+      );
+    }, [disabled, handelOnPress, value]);
 
     return (
       <List.Item
@@ -125,7 +79,8 @@ const ListItem = React.memo(
           fontSize: 15,
         }}
         style={{
-          backgroundColor: contact.disabled ? Colors.grey300 : Colors.white,
+          backgroundColor:
+            contact.disabled || disabled ? Colors.grey300 : Colors.white,
           borderBottomWidth: 1,
           borderBottomColor: Colors.grey600,
           flexDirection: "row",
@@ -136,18 +91,15 @@ const ListItem = React.memo(
     );
   },
   (prevProps, nextProps) => {
-    const change =
-      prevProps.isChecked !== nextProps.isChecked ||
-      prevProps.contact.disabled !== nextProps.contact.disabled ||
-      prevProps.contact.phoneNumbers[0].number !==
-        nextProps.contact.phoneNumbers[0].number ||
-      prevProps.contact.name !== nextProps.contact.name;
-
-    return !change;
+    return (
+      prevProps.isChecked === nextProps.isChecked &&
+      prevProps.disabled === nextProps.disabled &&
+      prevProps.contact.phoneNumbers[0].number ===
+        nextProps.contact.phoneNumbers[0].number &&
+      prevProps.contact.disabled === nextProps.contact.disabled
+    );
   }
 );
-
-export default ListItem;
 
 const styles = StyleSheet.create({
   buttonContainer: {
@@ -159,3 +111,101 @@ const styles = StyleSheet.create({
     gap: 5,
   },
 });
+
+interface ViewListItem {
+  contact: Contact;
+  removeContact: (contact: Contact) => void;
+  StartSubCycle?: () => void;
+  toggleDisable: (contact: Contact) => void;
+}
+
+const ListItemView = React.memo(
+  ({
+    contact,
+    removeContact,
+    StartSubCycle: StartSubCycleFun,
+    toggleDisable,
+  }: ViewListItem) => {
+    const { on_opreation: disabled } = useGlobal();
+
+    const renderLeft = useCallback(
+      () => (
+        <Avatar.Text
+          size={30}
+          label={contact.name.charAt(0).toUpperCase()}
+          style={{
+            backgroundColor: Colors.grey600,
+            marginTop: 10,
+            marginStart: 10,
+          }}
+        />
+      ),
+      [contact.name]
+    );
+
+    const renderRight = useCallback(() => {
+      return (
+        <View style={styles.buttonContainer}>
+          <StartSubCycle onPress={StartSubCycleFun} contact={contact} />
+          <Call contact={contact} />
+          <DeleteContact
+            contact={contact}
+            onPress={() => removeContact(contact)}
+          />
+          <IconButton
+            onPress={() => toggleDisable(contact)}
+            // textColor={contact.disabled ? Colors.green500 : Colors.red500}
+            disabled={disabled}
+            style={{
+              backgroundColor: !contact.disabled
+                ? Colors.grey300
+                : Colors.grey100,
+              marginHorizontal: 0,
+            }}
+            icon={contact.disabled ? "lock" : "lock-open"}
+            iconColor={!contact.disabled ? Colors.green500 : Colors.red500}
+          />
+        </View>
+      );
+    }, [StartSubCycleFun, contact, disabled, removeContact, toggleDisable]);
+
+    return (
+      <List.Item
+        title={contact.name}
+        description={
+          contact.phoneNumbers ? contact.phoneNumbers[0]?.number : ""
+        }
+        titleStyle={{
+          fontSize: 16,
+          fontWeight: "bold",
+        }}
+        descriptionStyle={{
+          fontSize: 15,
+        }}
+        style={{
+          backgroundColor:
+            contact.disabled || disabled ? Colors.grey300 : Colors.white,
+          borderBottomWidth: 1,
+          borderBottomColor: Colors.grey600,
+          flexDirection: "row",
+        }}
+        left={renderLeft}
+        right={renderRight}
+      />
+    );
+  },
+  (prevProps, nextProps) => {
+    return (
+      prevProps.contact.phoneNumbers[0].number ===
+        nextProps.contact.phoneNumbers[0].number &&
+      prevProps.contact.disabled === nextProps.contact.disabled
+    );
+  }
+);
+
+export const ListItem = {
+  Editable: EditableListItem,
+  View: ListItemView,
+};
+
+export default ListItem;

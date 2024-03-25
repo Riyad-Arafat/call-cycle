@@ -1,7 +1,7 @@
 import { getGroupById } from "@apis/index";
 import DeleteGroup from "@components/Actions/DeleteGroup";
 import GroupForm from "@components/Actions/GroupForm";
-import { ContactsList } from "@components/ContactsList";
+import ContactsList from "@components/ContactsList";
 import Loading from "@components/Loading";
 import useGlobal from "@hooks/useGlobal";
 import { IGroup } from "@typings/group";
@@ -82,9 +82,8 @@ export default function Group() {
             startCallCycle={startCallCycle}
             onUpadteSuccess={getGroup}
           />
-          <ContactsList
+          <ContactsList.View
             contactsList={group.contacts}
-            porpuse="call"
             onDeleteContact={onDeleteContact}
             onToggleDisable={onToggleDisable}
           />
@@ -108,10 +107,6 @@ const ActionsHeader = ({
   const { on_opreation } = useGlobal();
   const router = useRouter();
   const { t } = useTranslation();
-
-  useEffect(() => {
-    console.log("group FROM ActionsHeader", group);
-  }, [group]);
 
   return (
     <View

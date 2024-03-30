@@ -68,6 +68,36 @@ export const getCallPermission = async () => {
     }
   );
 
+  await PermissionsAndroid.request(
+    PermissionsAndroid.PERMISSIONS.READ_CONTACTS,
+    {
+      title: t("Permission Required"),
+      message: t("This app needs access to your contacts"),
+      buttonNegative: t("Cancel"),
+      buttonPositive: t("OK"),
+    }
+  );
+
+  await PermissionsAndroid.request(
+    PermissionsAndroid.PERMISSIONS.WRITE_CONTACTS,
+    {
+      title: t("Permission Required"),
+      message: t("This app needs access to your contacts"),
+      buttonNegative: t("Cancel"),
+      buttonPositive: t("OK"),
+    }
+  );
+
+  await PermissionsAndroid.request(
+    PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+    {
+      title: t("Permission Required"),
+      message: t("This app needs access to your microphone"),
+      buttonNegative: t("Cancel"),
+      buttonPositive: t("OK"),
+    }
+  );
+
   if (granted === PermissionsAndroid.RESULTS.GRANTED) {
     return true;
   } else {

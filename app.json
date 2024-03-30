@@ -27,7 +27,7 @@
         "foregroundImage": "./src/assets/images/icon.png",
         "backgroundColor": "#000000"
       },
-      "permissions": ["CAMERA_ROLL", "READ_CONTACTS", "CALL_PHONE"],
+      "permissions": ["READ_CONTACTS", "CALL_PHONE", "RECORD_AUDIO"],
       "package": "com.riyadelberkawy.callcycle"
     },
     "web": {
@@ -48,7 +48,15 @@
           "username": "riyadelberkawy"
         }
       ],
-      ["expo-localization"]
+      ["expo-localization"],
+      [
+        "react-native-permissions",
+        {
+          "ios": ["READ_CONTACTS", "CALL_PHONE", "RECORD_AUDIO"],
+          "android": ["READ_CONTACTS", "CALL_PHONE", "RECORD_AUDIO"]
+        }
+      ],
+      ["@config-plugins/react-native-webrtc"]
     ],
     "runtimeVersion": "1.0.0"
   }

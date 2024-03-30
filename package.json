@@ -14,7 +14,7 @@
     "android": "npx expo run:android",
     "ios": "npx expo run:ios",
     "web": "npx expo start --web",
-    "prebuild": "npx expo prebuild --clean",
+    "prebuild": "npx expo prebuild",
     "typesafe-i18n": "ts-node ./src/i18n/watcher.ts"
   },
   "dependencies": {
@@ -61,8 +61,6 @@
   "devDependencies": {
     "@babel/core": "^7.24.3",
     "@expo/webpack-config": "^19.0.1",
-    "@types/react": "~18.2.67",
-    "@types/react-native": "~0.72.8",
     "@types/react-native-background-timer": "^2.0.2",
     "@typescript-eslint/eslint-plugin": "^7.3.1",
     "@typescript-eslint/parser": "^7.3.1",

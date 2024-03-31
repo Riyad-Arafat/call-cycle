@@ -32,7 +32,9 @@
     <meta-data android:name="expo.modules.updates.EXPO_UPDATE_URL"
       android:value="https://u.expo.dev/311aceb2-afda-4131-ba5b-17c75b918514" />
     <service android:name="io.wazo.callkeep.VoiceConnectionService" android:label="Wazo"
-      android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE">
+      android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE"
+      android:exported="true"
+    >
       <intent-filter>
         <action android:name="android.telecom.ConnectionService" />
       </intent-filter>

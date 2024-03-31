@@ -4,15 +4,17 @@ import android.content.Context
 import android.telecom.TelecomManager
 import android.content.Intent
 import android.net.Uri
+import android.telephony.PhoneStateListener
+import android.telephony.TelephonyManager
+import com.facebook.react.bridge.Arguments
+import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
-import com.facebook.react.bridge.Promise
-import android.telephony.PhoneStateListener
-import android.telephony.TelephonyManager
+import com.facebook.react.modules.core.DeviceEventManagerModule
 
-class CallManagerModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
-        
+class CallManagerModule(private val reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
+   
     private var telephonyManager: TelephonyManager? = null
     private var callStateListener: CallStateListener? = null
 
@@ -59,9 +61,6 @@ class CallManagerModule(reactContext: ReactApplicationContext) : ReactContextBas
 
             lastState = state
         }
-    }
-    override fun getName(): String {
-        return "CallManager"
     }
 
     @ReactMethod

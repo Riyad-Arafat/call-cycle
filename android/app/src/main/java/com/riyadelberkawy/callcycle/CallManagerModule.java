@@ -16,6 +16,28 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter;
+import android.telecom.Call;
+import android.telecom.InCallService;
+
+public class MyInCallService extends InCallService {
+    private static Call currentCall;
+
+    @Override
+    public void onCallAdded(Call call) {
+        super.onCallAdded(call);
+        MyInCallService.currentCall = call;
+    }
+
+    @Override
+    public void onCallRemoved(Call call) {
+        super.onCallRemoved(call);
+        MyInCallService.currentCall = null;
+    }
+
+    public static Call getCurrentCall() {
+        return currentCall;
+    }
+}
 
 public class CallManagerModule extends ReactContextBaseJavaModule {
     private TelephonyManager telephonyManager = null;
@@ -83,8 +105,7 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
             TelecomManager telecomManager = (TelecomManager) getReactApplicationContext().getSystemService(Context.TELECOM_SERVICE);
             if (telecomManager != null) {
                 telecomManager.acceptRingingCall();
-                // Assuming MyInCallService.currentCall is accessible and has a method to get call details
-                Call currentCall = MyInCallService.currentCall;
+                Call currentCall = MyInCallService.getCurrentCall();
                 if (currentCall != null) {
                     promise.resolve(currentCall.getDetails().getCallId());
                 } else {

@@ -17,27 +17,7 @@ import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter;
 import android.telecom.Call;
-import android.telecom.InCallService;
 
-public class MyInCallService extends InCallService {
-    private static Call currentCall;
-
-    @Override
-    public void onCallAdded(Call call) {
-        super.onCallAdded(call);
-        MyInCallService.currentCall = call;
-    }
-
-    @Override
-    public void onCallRemoved(Call call) {
-        super.onCallRemoved(call);
-        MyInCallService.currentCall = null;
-    }
-
-    public static Call getCurrentCall() {
-        return currentCall;
-    }
-}
 
 public class CallManagerModule extends ReactContextBaseJavaModule {
     private TelephonyManager telephonyManager = null;
@@ -67,6 +47,8 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
                 case TelephonyManager.CALL_STATE_IDLE:
                     if (lastState == TelephonyManager.CALL_STATE_RINGING) {
                         params.putString("event", "callRejected");
+                    } else if (lastState == TelephonyManager.CALL_STATE_OFFHOOK) {
+                        params.putString("event", "callEnded");
                     }
                     break;
             }
@@ -76,7 +58,6 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
             lastState = state;
         }
     };
-
     @Override
     public String getName() {
         return "CallManager";
@@ -90,7 +71,8 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             if (ActivityCompat.checkSelfPermission(getReactApplicationContext(), Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) {
                 getReactApplicationContext().startActivity(intent);
-                promise.resolve("Call initiated successfully.");
+                Call currentCall = MyInCallService.getCurrentCall();
+                promise.resolve(currentCall);
             } else {
                 promise.reject("ERROR", "Call permission not granted.");
             }
@@ -100,6 +82,37 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void setMuteOn(Promise promise) {
+        try {
+            TelecomManager telecomManager = (TelecomManager) getReactApplicationContext().getSystemService(Context.TELECOM_SERVICE);
+            if (telecomManager != null) {
+                telecomManager.setMuted(true);
+                promise.resolve("Mute set to ON.");
+            } else {
+                promise.reject("ERROR", "Unable to get TelecomManager.");
+            }
+        } catch (Exception e) {
+            promise.reject("ERROR", "Failed to set mute on: " + e.getMessage());
+        }
+    }
+
+    @ReactMethod
+    public void setMuteOff(Promise promise) {
+        try {
+            TelecomManager telecomManager = (TelecomManager) getReactApplicationContext().getSystemService(Context.TELECOM_SERVICE);
+            if (telecomManager != null) {
+                telecomManager.setMuted(false);
+                promise.resolve("Mute set to OFF.");
+            } else {
+                promise.reject("ERROR", "Unable to get TelecomManager.");
+            }
+        } catch (Exception e) {
+            promise.reject("ERROR", "Failed to set mute off: " + e.getMessage());
+        }
+    }
+
+
+    @ReactMethod
     public void answerCall(Promise promise) {
         try {
             TelecomManager telecomManager = (TelecomManager) getReactApplicationContext().getSystemService(Context.TELECOM_SERVICE);
@@ -107,7 +120,7 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
                 telecomManager.acceptRingingCall();
                 Call currentCall = MyInCallService.getCurrentCall();
                 if (currentCall != null) {
-                    promise.resolve(currentCall.getDetails().getCallId());
+                    promise.resolve(currentCall);
                 } else {
                     promise.reject("ERROR", "No active call.");
                 }

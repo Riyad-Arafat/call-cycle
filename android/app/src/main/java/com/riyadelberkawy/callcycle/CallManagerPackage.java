@@ -18,7 +18,7 @@ public class CallManagerPackage implements ReactPackage {
     }
 
     @Override
-    public List<ViewManager<?, ?>> createViewManagers(ReactApplicationContext reactContext) {
+    public List<ViewManager> createViewManagers(ReactApplicationContext reactContext) {
         return Collections.emptyList();
     }
 }

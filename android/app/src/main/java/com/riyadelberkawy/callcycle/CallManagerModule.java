@@ -1,27 +1,28 @@
 package com.riyadelberkawy.callcycle;
 
+import android.Manifest;
 import android.content.Context;
-import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Looper;
+import android.telecom.Call;
 import android.telecom.TelecomManager;
+import android.telecom.VideoProfile;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
-import android.Manifest;
-import android.content.pm.PackageManager;
-import android.media.AudioManager;
+
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
-import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.WritableMap;
-import com.facebook.react.bridge.Arguments;
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter;
-import android.telecom.Call;
-import android.telecom.VideoProfile;
 
 public class CallManagerModule extends ReactContextBaseJavaModule {
     private final TelephonyManager telephonyManager;
@@ -30,38 +31,51 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
 
     public CallManagerModule(ReactApplicationContext reactContext) {
         super(reactContext);
+        Looper.prepare();
         telephonyManager = (TelephonyManager) reactContext.getSystemService(Context.TELEPHONY_SERVICE);
-        callStateListener = new PhoneStateListener() {
+        callStateListener = createPhoneStateListener();
+        telephonyManager.listen(callStateListener, PhoneStateListener.LISTEN_CALL_STATE);
+        Looper.loop();
+    }
+
+    private PhoneStateListener createPhoneStateListener() {
+        return new PhoneStateListener() {
             @Override
             public void onCallStateChanged(int state, String incomingNumber) {
-                super.onCallStateChanged(state, incomingNumber);
-                WritableMap params = Arguments.createMap();
-                switch (state) {
-                    case TelephonyManager.CALL_STATE_RINGING:
-                        params.putString("event", "incomingCall");
-                        params.putString("incomingNumber", incomingNumber);
-                        break;
-                    case TelephonyManager.CALL_STATE_OFFHOOK:
-                        if (lastState == TelephonyManager.CALL_STATE_RINGING) {
-                            params.putString("event", "callAnswered");
-                        }
-                        break;
-                    case TelephonyManager.CALL_STATE_IDLE:
-                        if (lastState == TelephonyManager.CALL_STATE_RINGING) {
-                            params.putString("event", "callRejected");
-                        } else if (lastState == TelephonyManager.CALL_STATE_OFFHOOK) {
-                            params.putString("event", "callEnded");
-                        }
-                        break;
-                }
-                if (params.hasKey("event")) {
-                    getReactApplicationContext().getJSModule(RCTDeviceEventEmitter.class).emit("callEvent", params);
-                }
-                lastState = state;
+                handleCallStateChanged(state, incomingNumber);
             }
         };
-        telephonyManager.listen(callStateListener, PhoneStateListener.LISTEN_CALL_STATE);
     }
+
+    private void handleCallStateChanged(int state, String incomingNumber) {
+        WritableMap params = Arguments.createMap();
+        switch (state) {
+            case TelephonyManager.CALL_STATE_RINGING:
+                params.putString("event", "incomingCall");
+                params.putString("incomingNumber", incomingNumber);
+                break;
+            case TelephonyManager.CALL_STATE_OFFHOOK:
+                if (lastState == TelephonyManager.CALL_STATE_RINGING) {
+                    params.putString("event", "callAnswered");
+                }
+                break;
+            case TelephonyManager.CALL_STATE_IDLE:
+                if (lastState == TelephonyManager.CALL_STATE_RINGING) {
+                    params.putString("event", "callRejected");
+                } else if (lastState == TelephonyManager.CALL_STATE_OFFHOOK) {
+                    params.putString("event", "callEnded");
+                }
+                break;
+        }
+        if (params.hasKey("event")) {
+            ReactApplicationContext context = getValidContext();
+            if (context != null) {
+                context.getJSModule(RCTDeviceEventEmitter.class).emit("callEvent", params);
+            }
+        }
+        lastState = state;
+    }
+
 
     @NonNull
     @Override
@@ -69,29 +83,52 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
         return "CallManager";
     }
 
+    private ReactApplicationContext getValidContext() {
+        // Handle the case where the context is not available
+        // You can throw an exception or log an error
+        return getReactApplicationContext();
+    }
+
+
     @ReactMethod
     public void call(String phoneNumber, Promise promise) {
-        TelecomManager telecomManager = (TelecomManager) getReactApplicationContext().getSystemService(Context.TELECOM_SERVICE);
+        ReactApplicationContext context = getValidContext();
+        if (context == null) {
+            promise.reject("ERROR", "Context is not available");
+            return;
+        }
 
-        if (telecomManager != null && ActivityCompat.checkSelfPermission(getReactApplicationContext(), Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) {
+        TelecomManager telecomManager = (TelecomManager) context.getSystemService(Context.TELECOM_SERVICE);
+
+        if (telecomManager != null && ActivityCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) {
             Uri uri = Uri.fromParts("tel", phoneNumber, null);
             Bundle extras = new Bundle();
             extras.putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, true);
-            telecomManager.placeCall(uri, extras);
-            Call currentCall = MyInCallService.getCurrentCall();
-            if (currentCall != null) {
-                promise.resolve(currentCall);
-            } else {
-                promise.reject("ERROR", "No current call available.");
+            try {
+                telecomManager.placeCall(uri, extras);
+                Call currentCall = MyInCallService.getCurrentCall();
+                if (currentCall != null) {
+                    promise.resolve("Call placed successfully");
+                } else {
+                    promise.reject("ERROR", "Call placed but no current call information available.");
+                }
+            } catch (Exception e) {
+                promise.reject("ERROR", "Failed to place call: " + e.getMessage());
             }
         } else {
             promise.reject("ERROR", "Permission not granted or TelecomManager not available.");
         }
     }
-    
+
     @ReactMethod
     public void setMuteOn(Promise promise) {
-        AudioManager audioManager = (AudioManager) getReactApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+        ReactApplicationContext context = getValidContext();
+        if (context == null) {
+            promise.reject("ERROR", "Context is not available");
+            return;
+        }
+
+        AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         if (audioManager != null) {
             audioManager.setMicrophoneMute(true);
             promise.resolve("Mute set to ON.");
@@ -102,7 +139,13 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void setMuteOff(Promise promise) {
-        AudioManager audioManager = (AudioManager) getReactApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+        ReactApplicationContext context = getValidContext();
+        if (context == null) {
+            promise.reject("ERROR", "Context is not available");
+            return;
+        }
+
+        AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         if (audioManager != null) {
             audioManager.setMicrophoneMute(false);
             promise.resolve("Mute set to OFF.");

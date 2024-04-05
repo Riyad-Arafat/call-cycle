@@ -2,7 +2,6 @@ package com.riyadelberkawy.callcycle
 
 import android.app.Application
 import android.content.res.Configuration
-import androidx.annotation.NonNull
 
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
@@ -18,7 +17,6 @@ import com.facebook.soloader.SoLoader
 
 import expo.modules.ApplicationLifecycleDispatcher
 import expo.modules.ReactNativeHostWrapper
-import com.riyadelberkawy.callcycle.CallManagerModule;
 
 class MainApplication : Application(), ReactApplication {
 

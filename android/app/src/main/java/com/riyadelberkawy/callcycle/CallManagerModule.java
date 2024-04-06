@@ -83,11 +83,10 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
         lastState = state;
     }
 
-
     @NonNull
     @Override
     public String getName() {
-        return "CallManager";
+        return "CallManagerModule";
     }
 
     @ReactMethod

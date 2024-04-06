@@ -1,5 +1,7 @@
 package com.riyadelberkawy.callcycle;
 
+import static android.content.ContentValues.TAG;
+
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -15,6 +17,7 @@ import android.telephony.TelephonyManager;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
@@ -25,6 +28,10 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter;
 
 public class CallManagerModule extends ReactContextBaseJavaModule {
+    public static CallManagerModule instance = null;
+   private ReactApplicationContext reactContext;
+
+
     private final TelephonyManager telephonyManager;
     private final PhoneStateListener callStateListener;
     private int lastState = TelephonyManager.CALL_STATE_IDLE;
@@ -68,7 +75,7 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
                 break;
         }
         if (params.hasKey("event")) {
-            ReactApplicationContext context = getValidContext();
+            ReactApplicationContext context = getContext();
             if (context != null) {
                 context.getJSModule(RCTDeviceEventEmitter.class).emit("callEvent", params);
             }
@@ -83,16 +90,9 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
         return "CallManager";
     }
 
-    private ReactApplicationContext getValidContext() {
-        // Handle the case where the context is not available
-        // You can throw an exception or log an error
-        return getReactApplicationContext();
-    }
-
-
     @ReactMethod
     public void call(String phoneNumber, Promise promise) {
-        ReactApplicationContext context = getValidContext();
+        ReactApplicationContext context = getContext();
         if (context == null) {
             promise.reject("ERROR", "Context is not available");
             return;
@@ -122,7 +122,7 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void setMuteOn(Promise promise) {
-        ReactApplicationContext context = getValidContext();
+        ReactApplicationContext context = getContext();
         if (context == null) {
             promise.reject("ERROR", "Context is not available");
             return;
@@ -139,7 +139,7 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void setMuteOff(Promise promise) {
-        ReactApplicationContext context = getValidContext();
+        ReactApplicationContext context = getContext();
         if (context == null) {
             promise.reject("ERROR", "Context is not available");
             return;
@@ -184,4 +184,27 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
             super.finalize();
         }
     }
+
+
+     public static CallManagerModule getInstance(ReactApplicationContext reactContext, boolean realContext) {
+        if (instance == null) {
+            Log.d(TAG, "[CallManagerModule] getInstance : " + (reactContext == null ? "null" : "ok"));
+            instance = new CallManagerModule(reactContext);
+        }
+        if (realContext) {
+            instance.setContext(reactContext);
+        }
+        return instance;
+    }
+
+
+     public void setContext(ReactApplicationContext reactContext) {
+        Log.d(TAG, "[CallManagerModule] updating react context");
+        this.reactContext = reactContext;
+    }
+
+    public ReactApplicationContext getContext() {
+        return this.reactContext;
+    }
+
 }

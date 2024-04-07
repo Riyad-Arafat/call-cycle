@@ -8,7 +8,7 @@
       "distribution": "internal",
       "android": {
         "image": "latest",
-        "gradleCommand": ":app:assembleDebug --stacktrace --debug --warning-mode all",
+        "gradleCommand": "assembleDebug --stacktrace --debug --warning-mode all",
         "buildType": "apk"
       },
       "ios": {

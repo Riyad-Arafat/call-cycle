@@ -4,8 +4,10 @@ import {
   EmitterSubscription,
 } from "react-native";
 
+const CallManagerModule = NativeModules.CallManagerModule;
+
 type CallEvent = {
-  event: "incomingCall" | "callAnswered" | "callRejected";
+  event: "incomingCall" | "callAnswered" | "callRejected" | "callEnded";
   incomingNumber?: string;
 };
 
@@ -25,7 +27,8 @@ class CallManager {
   };
 
   constructor() {
-    this.eventEmitter = new NativeEventEmitter(NativeModules.CallManager);
+    console.log("CallManagerModule", CallManagerModule);
+    this.eventEmitter = new NativeEventEmitter(CallManagerModule);
     this.eventListener = this.eventEmitter.addListener(
       "callEvent",
       (event: CallEvent) => {
@@ -45,7 +48,7 @@ class CallManager {
   }
 
   public addListener(
-    event: "incomingCall" | "callAnswered" | "callRejected",
+    event: CallEvent["event"],
     callback: (...args: any[]) => void
   ) {
     switch (event) {
@@ -61,9 +64,7 @@ class CallManager {
     }
   }
 
-  public removeListener(
-    event: "incomingCall" | "callAnswered" | "callRejected"
-  ) {
+  public removeListener(event: CallEvent["event"]) {
     switch (event) {
       case "incomingCall":
         this.callEventCallbacks.onIncomingCall = undefined;
@@ -87,15 +88,15 @@ class CallManager {
   }
 
   public makeCall(phoneNumber: string): Promise<void> {
-    return NativeModules.CallManager.call(phoneNumber);
+    console.log("Making call to", JSON.stringify(NativeModules));
+    return CallManagerModule.call(phoneNumber);
   }
-
   public answerCall(): Promise<void> {
-    return NativeModules.CallManager.answerCall();
+    return CallManagerModule.answerCall();
   }
 
   public rejectCall(): Promise<void> {
-    return NativeModules.CallManager.rejectCall();
+    return CallManagerModule.rejectCall();
   }
 
   public dispose() {
@@ -103,4 +104,5 @@ class CallManager {
   }
 }
 
-export default CallManager;
+const callManager = new CallManager();
+export default callManager;

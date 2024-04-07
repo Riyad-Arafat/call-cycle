@@ -15,7 +15,9 @@
       "fallbackToCacheTimeout": 0,
       "url": "https://u.expo.dev/311aceb2-afda-4131-ba5b-17c75b918514"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.riyadelberkawy.callcycle"
@@ -47,8 +49,9 @@
           "username": "riyadelberkawy"
         }
       ],
-      ["expo-localization"],
-      ["@config-plugins/react-native-webrtc"]
+      [
+        "expo-localization"
+      ]
     ],
     "runtimeVersion": "1.0.0"
   }

@@ -1,9 +1,0 @@
-{
-  "platforms": ["android"],
-  "ios": {
-    "modules": ["CallManagerModule"]
-  },
-  "android": {
-    "modules": ["expo.modules.callmanagermodule.CallManagerModule"]
-  }
-}

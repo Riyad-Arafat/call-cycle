@@ -50,7 +50,8 @@
     "react-native-screens": "~3.29.0",
     "react-native-send-intent": "^1.3.0",
     "react-native-web": "~0.19.10",
-    "uuid-random": "^1.3.2"
+    "uuid-random": "^1.3.2",
+    "react-native-call-manager": "link:./modules\\react-native-call-manager"
   },
   "devDependencies": {
     "@babel/core": "^7.24.4",

@@ -16,11 +16,9 @@ import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Looper;
 import android.telecom.Call;
 import android.telecom.TelecomManager;
 import android.telecom.VideoProfile;
-import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 
 import androidx.core.app.ActivityCompat;
@@ -39,14 +37,11 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
 
 
     private final TelephonyManager telephonyManager;
-    private final PhoneStateListener callStateListener;
     private int lastState = TelephonyManager.CALL_STATE_IDLE;
 
   public CallManagerModule(ReactApplicationContext reactContext) {
       super(reactContext);
         telephonyManager = (TelephonyManager) reactContext.getSystemService(Context.TELEPHONY_SERVICE);
-        callStateListener = createPhoneStateListener();
-        telephonyManager.listen(callStateListener, PhoneStateListener.LISTEN_CALL_STATE);
   }
 
   @Override
@@ -54,46 +49,6 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
   public String getName() {
     return NAME;
   }
-
-
- private PhoneStateListener createPhoneStateListener() {
-        return new PhoneStateListener() {
-            @Override
-            public void onCallStateChanged(int state, String incomingNumber) {
-                handleCallStateChanged(state, incomingNumber);
-            }
-        };
-    }
-
-    private void handleCallStateChanged(int state, String incomingNumber) {
-        WritableMap params = Arguments.createMap();
-        switch (state) {
-            case TelephonyManager.CALL_STATE_RINGING:
-                params.putString("event", "incomingCall");
-                params.putString("incomingNumber", incomingNumber);
-                break;
-            case TelephonyManager.CALL_STATE_OFFHOOK:
-                if (lastState == TelephonyManager.CALL_STATE_RINGING) {
-                    params.putString("event", "callAnswered");
-                }
-                break;
-            case TelephonyManager.CALL_STATE_IDLE:
-                if (lastState == TelephonyManager.CALL_STATE_RINGING) {
-                    params.putString("event", "callRejected");
-                } else if (lastState == TelephonyManager.CALL_STATE_OFFHOOK) {
-                    params.putString("event", "callEnded");
-                }
-                break;
-        }
-        if (params.hasKey("event")) {
-            ReactApplicationContext context = getContext();
-            if (context != null) {
-                context.getJSModule(RCTDeviceEventEmitter.class).emit("callEvent", params);
-            }
-        }
-        lastState = state;
-    }
-
 
     @ReactMethod
     public void call(String phoneNumber, Promise promise) {
@@ -178,15 +133,6 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
             promise.resolve("Call rejected successfully.");
         } else {
             promise.reject("ERROR", "No active call to reject.");
-        }
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        try {
-            telephonyManager.listen(callStateListener, PhoneStateListener.LISTEN_NONE);
-        } finally {
-            super.finalize();
         }
     }
 

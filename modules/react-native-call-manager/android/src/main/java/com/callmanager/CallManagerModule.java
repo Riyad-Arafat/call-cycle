@@ -44,11 +44,9 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
 
   public CallManagerModule(ReactApplicationContext reactContext) {
       super(reactContext);
-        Looper.prepare();
         telephonyManager = (TelephonyManager) reactContext.getSystemService(Context.TELEPHONY_SERVICE);
         callStateListener = createPhoneStateListener();
         telephonyManager.listen(callStateListener, PhoneStateListener.LISTEN_CALL_STATE);
-        Looper.loop();
   }
 
   @Override

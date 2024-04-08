@@ -4,7 +4,6 @@
     "slug": "call-cycle",
     "version": "1.0.1",
     "orientation": "portrait",
-    "jsEngine": "hermes",
     "icon": "./src/assets/images/icon.png",
     "userInterfaceStyle": "light",
     "splash": {

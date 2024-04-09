@@ -36,6 +36,7 @@ class CallManagerClass {
   };
 
   constructor() {
+    this.becomeDefaultDialer();
     console.log("CallManagerModule", CallManager);
   }
 
@@ -67,6 +68,15 @@ class CallManagerClass {
       case "callRejected":
         this.callEventCallbacks.onCallRejected = undefined;
         break;
+    }
+  }
+
+  public async becomeDefaultDialer() {
+    try {
+      const result = await CallManager.becomeDefaultDialer();
+      console.log(result); // Handle success
+    } catch (e) {
+      console.error(e); // Handle error
     }
   }
 

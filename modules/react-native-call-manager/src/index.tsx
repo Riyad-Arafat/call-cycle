@@ -1,9 +1,4 @@
-import {
-  EmitterSubscription,
-  NativeEventEmitter,
-  NativeModules,
-  Platform,
-} from "react-native";
+import { NativeModules, Platform } from "react-native";
 
 const LINKING_ERROR =
   `The package 'react-native-call-manager' doesn't seem to be linked. Make sure: \n\n` +
@@ -34,8 +29,6 @@ type CallEventCallbacks = {
 };
 
 class CallManagerClass {
-  private eventEmitter: NativeEventEmitter;
-  private eventListener: EmitterSubscription;
   private callEventCallbacks: CallEventCallbacks = {
     onIncomingCall: undefined,
     onCallAnswered: undefined,
@@ -44,23 +37,6 @@ class CallManagerClass {
 
   constructor() {
     console.log("CallManagerModule", CallManager);
-    this.eventEmitter = new NativeEventEmitter(CallManager);
-    this.eventListener = this.eventEmitter.addListener(
-      "callEvent",
-      (event: CallEvent) => {
-        switch (event.event) {
-          case "incomingCall":
-            this.callEventCallbacks.onIncomingCall?.(event.incomingNumber);
-            break;
-          case "callAnswered":
-            this.callEventCallbacks.onCallAnswered?.();
-            break;
-          case "callRejected":
-            this.callEventCallbacks.onCallRejected?.();
-            break;
-        }
-      }
-    );
   }
 
   public addListener(
@@ -92,19 +68,10 @@ class CallManagerClass {
         this.callEventCallbacks.onCallRejected = undefined;
         break;
     }
-
-    // if all callbacks are undefined, remove the event listener
-    if (
-      !this.callEventCallbacks.onIncomingCall &&
-      !this.callEventCallbacks.onCallAnswered &&
-      !this.callEventCallbacks.onCallRejected
-    ) {
-      this.eventEmitter.removeAllListeners("callEvent");
-    }
   }
 
   public makeCall(phoneNumber: string): Promise<void> {
-    console.log("Making call to", JSON.stringify(NativeModules));
+    console.log("Making call to", CallManager);
     return CallManager.call(phoneNumber);
   }
   public answerCall(): Promise<void> {
@@ -113,10 +80,6 @@ class CallManagerClass {
 
   public rejectCall(): Promise<void> {
     return CallManager.rejectCall();
-  }
-
-  public dispose() {
-    this.eventListener.remove();
   }
 }
 

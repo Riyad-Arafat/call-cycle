@@ -41,7 +41,8 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
 
   public CallManagerModule(ReactApplicationContext reactContext) {
       super(reactContext);
-        telephonyManager = (TelephonyManager) reactContext.getSystemService(Context.TELEPHONY_SERVICE);
+      this.setContext(reactContext)
+      telephonyManager = (TelephonyManager) reactContext.getSystemService(Context.TELEPHONY_SERVICE);
   }
 
   @Override
@@ -134,18 +135,6 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
         } else {
             promise.reject("ERROR", "No active call to reject.");
         }
-    }
-
-
-     public static CallManagerModule getInstance(ReactApplicationContext reactContext, boolean realContext) {
-        if (instance == null) {
-            Log.d(TAG, "[CallManagerModule] getInstance : " + (reactContext == null ? "null" : "ok"));
-            instance = new CallManagerModule(reactContext);
-        }
-        if (realContext) {
-            instance.setContext(reactContext);
-        }
-        return instance;
     }
 
 

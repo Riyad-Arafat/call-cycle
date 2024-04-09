@@ -32,7 +32,7 @@ type CallEvent = {
 
 var CallStateUpdateActionModule = {
   callback: undefined as
-    | ((event: CallEvent, number?: string) => void)
+    | ((event: CallEvent["event"], number?: string) => void)
     | undefined,
 
   callStateUpdated(state: CallEvent, incomingNumber?: string) {
@@ -51,12 +51,19 @@ class CallManagerClass {
 
   constructor() {
     this.becomeDefaultDialer();
-    console.log("CallManagerModule", CallManager);
   }
 
-  public onStateChange(callback: (event: CallEvent, number?: string) => {}) {
+  public onStateChange(
+    callback: (event: CallEvent["event"], number?: string) => void
+  ) {
+    CallManager.startListener();
     this.subscription = new NativeEventEmitter(CallManager);
-    this.subscription.addListener("PhoneCallStateUpdate", callback);
+
+    this.subscription.addListener("PhoneCallStateUpdate", (event: any) => {
+      console.log(event); // "Incoming", "Offhook", "Disconnected", "Missed"
+      // callback(event.event, event.incomingNumber);
+    });
+
     CallStateUpdateActionModule.callback = callback;
   }
 
@@ -70,7 +77,6 @@ class CallManagerClass {
   }
 
   public makeCall(phoneNumber: string): Promise<void> {
-    console.log("Making call to", CallManager);
     return CallManager.call(phoneNumber);
   }
   public answerCall(): Promise<void> {
@@ -81,7 +87,7 @@ class CallManagerClass {
     return CallManager.rejectCall();
   }
 
-  dispose() {
+  public dispose() {
     CallManager.stopListener();
     if (this.subscription) {
       this.subscription.removeAllListeners("PhoneCallStateUpdate");

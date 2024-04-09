@@ -51,7 +51,7 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
     return NAME;
   }
 
-    @ReactMethod
+   @ReactMethod
     public void call(String phoneNumber, Promise promise) {
         ReactApplicationContext context = getContext();
         if (context == null) {
@@ -60,24 +60,29 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
         }
 
         TelecomManager telecomManager = (TelecomManager) context.getSystemService(Context.TELECOM_SERVICE);
+        if (telecomManager == null) {
+            promise.reject("ERROR", "TelecomManager not available.");
+            return;
+        }
 
-        if (telecomManager != null && ActivityCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) {
-            Uri uri = Uri.fromParts("tel", phoneNumber, null);
-            Bundle extras = new Bundle();
-            extras.putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, true);
-            try {
-                telecomManager.placeCall(uri, extras);
-                Call currentCall = MyInCallService.getCurrentCall();
-                if (currentCall != null) {
-                    promise.resolve("Call placed successfully");
-                } else {
-                    promise.reject("ERROR", "Call placed but no current call information available.");
-                }
-            } catch (Exception e) {
-                promise.reject("ERROR", "Failed to place call: " + e.getMessage());
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+            promise.reject("ERROR", "Permission for CALL_PHONE not granted.");
+            return;
+        }
+
+        Uri uri = Uri.fromParts("tel", phoneNumber, null);
+        Bundle extras = new Bundle();
+        extras.putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, true);
+        try {
+            telecomManager.placeCall(uri, extras);
+            Call currentCall = MyInCallService.getCurrentCall();
+            if (currentCall != null) {
+                promise.resolve("Call placed successfully");
+            } else {
+                promise.reject("ERROR", "Call placed but no current call information available.");
             }
-        } else {
-            promise.reject("ERROR", "Permission not granted or TelecomManager not available.");
+        } catch (Exception e) {
+            promise.reject("ERROR", "Failed to place call: " + e.getMessage());
         }
     }
 

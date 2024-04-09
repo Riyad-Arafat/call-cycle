@@ -2,20 +2,44 @@ package com.callmanager;
 
 import android.telecom.Connection;
 import android.telecom.DisconnectCause;
+import android.telecom.CallAudioState;
 import android.media.AudioManager;
 import android.content.Context;
 import com.facebook.react.bridge.ReactApplicationContext;
 import android.util.Log;
 
 public class CallManagerConnection extends Connection {
-   private static final String TAG = "CallManagerConnection";
+    private static final String TAG = "CallManagerConnection";
     private AudioManager audioManager;
     ReactApplicationContext reactContext = null;
     CallManagerConnection connection = new CallManagerConnection(reactContext);
 
-    
     public CallManagerConnection(ReactApplicationContext reactContext) {
         this.reactContext = reactContext;
+    }
+
+    @Override
+    public void onShowIncomingCallUi() {
+    Log.d(TAG, "onShowIncomingCallUi");
+        // Show your incoming call UI here
+    }
+
+    @Override
+    public void onCallAudioStateChanged(CallAudioState state) {
+        Log.d(TAG, "onCallAudioStateChanged");
+        // Handle audio state changes here
+    }
+
+    @Override
+    public void onHold() {
+        super.onHold();
+        // Put the call on hold here
+    }
+
+    @Override
+    public void onUnhold() {
+        super.onUnhold();
+        // Resume the call here
     }
 
     @Override
@@ -34,6 +58,13 @@ public class CallManagerConnection extends Connection {
     }
 
     @Override
+    public void onReject() {
+        super.onReject();
+        setDisconnected(new DisconnectCause(DisconnectCause.REJECTED));
+        destroy(); // Clean up the call
+    }
+
+    @Override
     public void onDisconnect() {
         super.onDisconnect();
         setDisconnected(new DisconnectCause(DisconnectCause.LOCAL));
@@ -44,5 +75,4 @@ public class CallManagerConnection extends Connection {
         }
         destroy(); // Clean up the call
     }
-
 }

@@ -41,8 +41,8 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
 
   public CallManagerModule(ReactApplicationContext reactContext) {
       super(reactContext);
-      this.setContext(reactContext)
       telephonyManager = (TelephonyManager) reactContext.getSystemService(Context.TELEPHONY_SERVICE);
+    this.reactContext = reactContext;
   }
 
   @Override
@@ -137,11 +137,6 @@ public class CallManagerModule extends ReactContextBaseJavaModule {
         }
     }
 
-
-     public void setContext(ReactApplicationContext reactContext) {
-        Log.d(TAG, "[CallManagerModule] updating react context");
-        this.reactContext = reactContext;
-    }
 
     public ReactApplicationContext getContext() {
         return this.reactContext;

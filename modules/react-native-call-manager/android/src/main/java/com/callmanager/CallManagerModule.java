@@ -33,6 +33,9 @@ import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter;
 
+import java.util.HashMap;
+import java.util.Map;
+
 
 @ReactModule(name = CallManagerModule.NAME)
 public class CallManagerModule extends ReactContextBaseJavaModule   implements Application.ActivityLifecycleCallbacks,
@@ -45,7 +48,7 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
    private static final String TAG = "CallManagerModule";
 
 
-    private final TelephonyManager telephonyManager;
+    private TelephonyManager telephonyManager;
     private int lastState = TelephonyManager.CALL_STATE_IDLE;
 
 
@@ -97,8 +100,9 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
             return;
         }
 
-        if (!context.getPackageName().equals(TelecomManager.getDefaultDialerPackage(context))) {
-            promise.reject("ERROR", "Not default dialer");
+      
+        if (!context.getPackageName().equals(telecomManager.getDefaultDialerPackage())) {
+            promise.reject("ERROR", "App not set as default dialer.");
             return;
         }
 

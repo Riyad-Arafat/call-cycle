@@ -100,11 +100,6 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
             return;
         }
 
-      
-        if (!context.getPackageName().equals(telecomManager.getDefaultDialerPackage())) {
-            promise.reject("ERROR", "App not set as default dialer.");
-            return;
-        }
 
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
             promise.reject("ERROR", "Permission for CALL_PHONE not granted.");

@@ -30,11 +30,14 @@ import android.app.Activity;
 import android.app.Application;
 import android.telephony.PhoneStateListener;
 import android.app.role.RoleManager;
-
+import android.app.NotificationChannel;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter;
-
+import androidx.core.app.NotificationCompat;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,6 +66,38 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
     private CallStateUpdateActionModule jsModule = null;
     private CallDetectionPhoneStateListener callDetectionPhoneStateListener;
     private Activity activity = null;
+
+    private static final String CHANNEL_ID = "sim_settings_channel";
+    private static final int NOTIFICATION_ID = 1;
+
+   
+    private void openSimCardSettings() {
+        Intent intent = new Intent();
+        intent.setComponent(new ComponentName("com.android.settings", "com.android.settings.Settings$SimCardInfoSettingsActivity"));
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        Context context = getReactApplicationContext(); 
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+            
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "SIM Settings", NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+            notificationManager.createNotificationChannel(channel);
+
+            Notification notification = new NotificationCompat.Builder(context, CHANNEL_ID)
+                    .setContentTitle("SIM Settings")
+                    .setContentText("Tap to open SIM card settings.")
+                    .setSmallIcon(android.R.drawable.sym_def_app_icon) // Set an appropriate icon
+                    .setContentIntent(pendingIntent)
+                    .setAutoCancel(true)
+                    .build();
+
+            notificationManager.notify(NOTIFICATION_ID, notification);
+        } else {
+            context.startActivity(intent);
+        }
+    }
 
     public CallManagerModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -99,20 +134,28 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
             promise.reject("ERROR", "Context is not available");
             return;
         }
-
+    
         if (telecomManager == null) {
             promise.reject("ERROR", "TelecomManager not available.");
             return;
         }
-
+    
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
             promise.reject("ERROR", "Permission for CALL_PHONE not granted.");
             return;
         }
+    
+
+        // multiple SIM card support
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            openSimCardSettings();
+        }
+
 
         Uri uri = Uri.fromParts("tel", phoneNumber, null);
         Bundle extras = new Bundle();
         extras.putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, true);
+        extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, phoneAccountHandle);
         try {
             telecomManager.placeCall(uri, extras);
             promise.resolve("Call placed successfully");

@@ -1,6 +1,35 @@
 package com.callmanager;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+
+import android.Manifest;
+import android.app.Activity;
+import android.app.Application;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.role.RoleManager;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.media.AudioManager;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.telecom.Call;
+import android.telecom.PhoneAccount;
+import android.telecom.PhoneAccountHandle;
+import android.telecom.TelecomManager;
+import android.telecom.VideoProfile;
+import android.telecom.ConnectionRequest;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
+import android.util.Log;
+
 
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -8,51 +37,16 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.module.annotations.ReactModule;
 
-import android.Manifest;
-import android.content.Context;
-import android.content.pm.PackageManager;
-import android.media.AudioManager;
-import android.net.Uri;
-import android.os.Bundle;
-import android.os.Build;
-import android.telecom.Call;
-import android.telecom.TelecomManager;
-import android.telecom.VideoProfile;
-import android.telephony.TelephonyManager;
-import android.content.Intent;
-import android.provider.Settings;
-import android.telecom.PhoneAccountHandle;
-import android.telecom.PhoneAccount;
-import android.content.ComponentName;
-import androidx.core.app.ActivityCompat;
-import android.util.Log;
-import android.app.Activity;
-import android.app.Application;
-import android.telephony.PhoneStateListener;
-import android.app.role.RoleManager;
-import android.app.NotificationChannel;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import com.facebook.react.bridge.Arguments;
-import com.facebook.react.bridge.WritableMap;
-import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter;
-import androidx.core.app.NotificationCompat;
 import java.util.HashMap;
 import java.util.Map;
+
 
 
 @ReactModule(name = CallManagerModule.NAME)
 public class CallManagerModule extends ReactContextBaseJavaModule   implements Application.ActivityLifecycleCallbacks,
         CallDetectionPhoneStateListener.PhoneCallStateUpdate {
-
-
-  public static final String NAME = "CallManager";
-  public static final String connectionServiceId = "com.callmanager.callService";
-  public static CallManagerModule instance = null;
-  private ReactApplicationContext reactContext;
-   private static final String TAG = "CallManagerModule";
-
+    public static final String NAME = "CallManager";
+    private static final String TAG = "CallManagerModule";
 
     private TelephonyManager telephonyManager;
     private TelecomManager telecomManager;
@@ -60,8 +54,7 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
     private PhoneAccount phoneAccount;
     private int lastState = TelephonyManager.CALL_STATE_IDLE;
 
-
-     private boolean wasAppInOffHook = false;
+    private boolean wasAppInOffHook = false;
     private boolean wasAppInRinging = false;
     private CallStateUpdateActionModule jsModule = null;
     private CallDetectionPhoneStateListener callDetectionPhoneStateListener;
@@ -70,54 +63,28 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
     private static final String CHANNEL_ID = "sim_settings_channel";
     private static final int NOTIFICATION_ID = 1;
 
-   
-    private void openSimCardSettings() {
-        Intent intent = new Intent();
-        intent.setComponent(new ComponentName("com.android.settings", "com.android.settings.Settings$SimCardInfoSettingsActivity"));
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-        Context context = getReactApplicationContext(); 
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-            
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "SIM Settings", NotificationManager.IMPORTANCE_DEFAULT);
-            NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-            notificationManager.createNotificationChannel(channel);
-
-            Notification notification = new NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setContentTitle("SIM Settings")
-                    .setContentText("Tap to open SIM card settings.")
-                    .setSmallIcon(android.R.drawable.sym_def_app_icon) // Set an appropriate icon
-                    .setContentIntent(pendingIntent)
-                    .setAutoCancel(true)
-                    .build();
-
-            notificationManager.notify(NOTIFICATION_ID, notification);
-        } else {
-            context.startActivity(intent);
-        }
-    }
+    private final ReactApplicationContext reactContext;
 
     public CallManagerModule(ReactApplicationContext reactContext) {
         super(reactContext);
         this.reactContext = reactContext;
-        telephonyManager = (TelephonyManager) reactContext.getSystemService(Context.TELEPHONY_SERVICE);
-
-        // Consider moving this to a separate method to control when it's executed
-        // and to handle permissions and user consent properly
+        this.telephonyManager = (TelephonyManager) reactContext.getSystemService(Context.TELEPHONY_SERVICE);
+        this.telecomManager = (TelecomManager) reactContext.getSystemService(Context.TELECOM_SERVICE);
         ComponentName componentName = new ComponentName(reactContext, CallManagerConnectionService.class);
-        phoneAccountHandle = new PhoneAccountHandle(componentName, connectionServiceId);
-
-        phoneAccount = PhoneAccount.builder(phoneAccountHandle, "CallManager")
-            .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER)
-            .build();
-
-        telecomManager = (TelecomManager) reactContext.getSystemService(Context.TELECOM_SERVICE);
+        this.phoneAccountHandle = new PhoneAccountHandle(componentName, "com.callmanager.callService");
+        this.phoneAccount = PhoneAccount.builder(phoneAccountHandle, "CallManager")
+                .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER)
+                .build();
+        
+        registerPhoneAccount();
+    }
+    
+    
+    private void registerPhoneAccount() {
         if (ActivityCompat.checkSelfPermission(reactContext, Manifest.permission.MANAGE_OWN_CALLS) == PackageManager.PERMISSION_GRANTED) {
             telecomManager.registerPhoneAccount(phoneAccount);
         } else {
-            Log.d(TAG, "CallManagerModule: No permission to register phone account");
+            Log.e(TAG, "Permission MANAGE_OWN_CALLS not granted. Cannot register phone account.");
         }
     }
 
@@ -129,36 +96,23 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
 
     @ReactMethod
     public void call(String phoneNumber, Promise promise) {
-        ReactApplicationContext context = getContext();
-        if (context == null) {
-            promise.reject("ERROR", "Context is not available");
-            return;
-        }
-    
-        if (telecomManager == null) {
-            promise.reject("ERROR", "TelecomManager not available.");
-            return;
-        }
-    
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(getReactApplicationContext(), Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
             promise.reject("ERROR", "Permission for CALL_PHONE not granted.");
             return;
         }
-    
 
-        // multiple SIM card support
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            openSimCardSettings();
-        }
-
-
+        PhoneAccountHandle phoneAccountHandle = new PhoneAccountHandle(new ComponentName(reactContext, CallManagerConnectionService.class), "com.callmanager.callService");
         Uri uri = Uri.fromParts("tel", phoneNumber, null);
         Bundle extras = new Bundle();
-        extras.putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, true);
-        extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, phoneAccountHandle);
+        extras.putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, false);
+        ConnectionRequest request = new ConnectionRequest(phoneAccountHandle, uri, extras);
         try {
             telecomManager.placeCall(uri, extras);
-            promise.resolve("Call placed successfully");
+            if (telecomManager.getDefaultDialerPackage().equals(reactContext.getPackageName())) { // Use getDefaultDialerPackage
+                promise.resolve("Call placed successfully.");
+            } else {
+                promise.reject("ERROR", "Not set as default dialer.");
+            }
         } catch (Exception e) {
             promise.reject("ERROR", "Failed to place call: " + e.getMessage());
         }
@@ -167,31 +121,21 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
 
     @ReactMethod
     public void becomeDefaultDialer(Promise promise) {
-        ReactApplicationContext context = getContext();
-        if (context == null) {
-            promise.reject("ERROR", "Context is not available");
-            return;
-        }
-    
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-            RoleManager roleManager = context.getSystemService(RoleManager.class);
-            if (roleManager.isRoleAvailable(RoleManager.ROLE_DIALER)) {
-                if (roleManager.isRoleHeld(RoleManager.ROLE_DIALER)) {
-                    promise.resolve("Already the default dialer.");
-                } else {
-                    Intent intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_DIALER);
-                    context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                    promise.resolve("Requested default dialer change.");
-                }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            RoleManager roleManager = (RoleManager) reactContext.getSystemService(Context.ROLE_SERVICE);
+            if (roleManager.isRoleAvailable(RoleManager.ROLE_DIALER) && !roleManager.isRoleHeld(RoleManager.ROLE_DIALER)) {
+                Intent intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_DIALER);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                getReactApplicationContext().startActivity(intent);
+                promise.resolve("Requested default dialer change.");
             } else {
-                promise.reject("ERROR", "Role not available.");
+                promise.reject("ERROR", "Role not available or already held.");
             }
         } else {
-            Intent intent = new Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER);
-            intent.putExtra(TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME, context.getPackageName());
-    
-            if (intent.resolveActivity(context.getPackageManager()) != null) {
-                context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            Intent intent = new Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER)
+                .putExtra(TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME, reactContext.getPackageName());
+            if (intent.resolveActivity(reactContext.getPackageManager()) != null) {
+                reactContext.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
                 promise.resolve("Requested default dialer change.");
             } else {
                 promise.reject("ERROR", "Unable to request default dialer change.");
@@ -201,13 +145,7 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
 
     @ReactMethod
     public void setMuteOn(Promise promise) {
-        ReactApplicationContext context = getContext();
-        if (context == null) {
-            promise.reject("ERROR", "Context is not available");
-            return;
-        }
-
-        AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        AudioManager audioManager = (AudioManager) reactContext.getSystemService(Context.AUDIO_SERVICE);
         if (audioManager != null) {
             audioManager.setMicrophoneMute(true);
             promise.resolve("Mute set to ON.");
@@ -216,7 +154,8 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
         }
     }
 
-    @ReactMethod
+
+     @ReactMethod
     public void setMuteOff(Promise promise) {
         ReactApplicationContext context = getContext();
         if (context == null) {
@@ -276,10 +215,13 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
 
     @ReactMethod
     public void stopListener() {
-        telephonyManager.listen(callDetectionPhoneStateListener,
-                PhoneStateListener.LISTEN_NONE);
-        telephonyManager = null;
-        callDetectionPhoneStateListener = null;
+        if (telephonyManager != null && callDetectionPhoneStateListener != null) {
+            telephonyManager.listen(callDetectionPhoneStateListener, PhoneStateListener.LISTEN_NONE);
+        }
+        if (activity != null) {
+            activity.getApplication().unregisterActivityLifecycleCallbacks(this);
+            activity = null;
+        }
     }
 
     /**
@@ -293,42 +235,6 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
         map.put("Disconnected", "Disconnected");
         map.put("Missed", "Missed");
         return map;
-    }
-
-    // Activity Lifecycle Methods
-    @Override
-    public void onActivityCreated(Activity activity, Bundle savedInstanceType) {
-
-    }
-
-    @Override
-    public void onActivityStarted(Activity activity) {
-
-    }
-
-    @Override
-    public void onActivityResumed(Activity activity) {
-
-    }
-
-    @Override
-    public void onActivityPaused(Activity activity) {
-
-    }
-
-    @Override
-    public void onActivityStopped(Activity activity) {
-
-    }
-
-    @Override
-    public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
-
-    }
-
-    @Override
-    public void onActivityDestroyed(Activity activity) {
-
     }
 
     @Override
@@ -361,5 +267,42 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
                 jsModule.callStateUpdated("Incoming", phoneNumber);
                 break;
         }
+    }
+
+    // Other methods as previously defined but refined for better readability and error handling
+
+    @Override
+    public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+        // Implement as necessary
+    }
+
+    @Override
+    public void onActivityStarted(Activity activity) {
+        // Implement as necessary
+    }
+
+    @Override
+    public void onActivityResumed(Activity activity) {
+        // Implement as necessary
+    }
+
+    @Override
+    public void onActivityPaused(Activity activity) {
+        // Implement as necessary
+    }
+
+    @Override
+    public void onActivityStopped(Activity activity) {
+        // Implement as necessary
+    }
+
+    @Override
+    public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
+        // Implement as necessary
+    }
+
+    @Override
+    public void onActivityDestroyed(Activity activity) {
+        // Implement as necessary
     }
 }

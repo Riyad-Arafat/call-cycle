@@ -113,7 +113,7 @@ export class ReplaceDialer {
     }
   }
 
-  isDefaultDialer(cb: (data: any) => void) {
+  isDefaultDialer(cb?: (data: any) => void) {
     this.checkNativeModule();
     return NativeModules.ReplaceDialerModule.isDefaultDialer((data) => {
       console.log("isDefaultDialer()", data);
@@ -123,7 +123,7 @@ export class ReplaceDialer {
     });
   }
 
-  setDefaultDialer(cb: (data: any) => void) {
+  setDefaultDialer(cb?: (data: any) => void) {
     this.checkNativeModule();
     //return NativeModules.ReplaceDialerModule.setDefault();
     return NativeModules.ReplaceDialerModule.setDefaultDialer((data) => {

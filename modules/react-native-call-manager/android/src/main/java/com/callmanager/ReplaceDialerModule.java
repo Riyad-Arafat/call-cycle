@@ -22,13 +22,12 @@ import com.facebook.react.bridge.Callback;
 
 import android.telecom.TelecomManager;
 
-//TODO : https://stackoverflow.com/questions/53411220/pass-activity-result-into-a-react-native-module
-public class ReplaceDialerModule extends ReactContextBaseJavaModule /*implements ActivityEventListener*/ {
+public class ReplaceDialerModule extends ReactContextBaseJavaModule implements ActivityEventListener {
     ReactApplicationContext mContext;
     
     private static Callback setCallback;
 
-    private static String LOG = "one.telefon.replacedialer.ReplaceDialerModule";
+    private static String LOG = "com.callmanager.ReplaceDialerModule";
 
     // for default dialer
     private TelecomManager telecomManager;
@@ -39,10 +38,10 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule /*implements
 
     public ReplaceDialerModule(ReactApplicationContext context) {
         super(context);
-        this.mContext=context;
-        //this.mContext.addActivityEventListener(this);
+        this.mContext = context;
+        this.mContext.addActivityEventListener(this);
     }
-    
+
     @Override
     public String getName() {
         return "ReplaceDialerModule";
@@ -72,40 +71,52 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule /*implements
         }
     }
     
-    /*
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode==REQUEST_CODE_SET_DEFAULT_DIALER) 
-        {
-            setCallback.invoke(resultCode);
-        //checkSetDefaultDialerResult(resultCode)
-        }
-        if (requestCode==RC_DEFAULT_PHONE) 
-        {
-            setCallback.invoke(resultCode);
-        //checkSetDefaultDialerResult(resultCode)
+        @Override
+    public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
+        if (requestCode == RC_DEFAULT_PHONE) {
+            // Handle the result of ACTION_CHANGE_DEFAULT_DIALER
+            if (resultCode == Activity.RESULT_OK) {
+                // Successfully set as default dialer
+                setCallback.invoke(true);
+            } else {
+                // Failed to set as default dialer
+                setCallback.invoke(false);
+            }
         }
     }
-        
-    @Override
-    public void onNewIntent(Intent intent) {
-  
-    }
-    */
 
+    
     @ReactMethod
     public void setDefaultDialer(Callback myCallback) {
-        Log.w(LOG, "setDefaultDialer() "+this.mContext.getPackageName());
-        setCallback=myCallback;
+        Log.w(LOG, "setDefaultDialer() " + this.mContext.getPackageName());
+        setCallback = myCallback;
 
+        // Create the intent to prompt the user to select the default dialer
         Intent intent = new Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER);
         intent.putExtra(TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME, this.mContext.getPackageName());
-        this.mContext.startActivityForResult(intent, RC_DEFAULT_PHONE,new Bundle());
-          
-        myCallback.invoke(true);
-        // startActivityForResult(intent, REQUEST_CODE_SET_DEFAULT_DIALER); //Different
-          // code
-          // Huawei/ honor : ??? manual ??? startActivityForResult(new
-          // Intent(android.provider.Settings.ACTION_SETTINGS), 0);
+
+        // Run on the UI thread
+        mContext.getCurrentActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                // Start the activity and expect a result to be returned to onActivityResult
+                if (mContext.getCurrentActivity() != null) {
+                    mContext.getCurrentActivity().startActivityForResult(intent, RC_DEFAULT_PHONE, new Bundle());
+                    myCallback.invoke(true);
+                } else {
+                    Log.e(LOG, "Unable to get current activity.");
+                    myCallback.invoke(false); // Inform JavaScript that the operation failed
+                }
+            }
+        });
     }
+
+
+    @Override
+    public void onNewIntent(Intent intent) {
+        if (mContext.getCurrentActivity() != null) {
+            mContext.getCurrentActivity().setIntent(intent);
+        }
+    }
+
 }

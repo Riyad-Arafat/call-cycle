@@ -1,107 +1,85 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-  <uses-permission android:name="android.permission.BIND_TELECOM_CONNECTION_SERVICE" />
-  <uses-permission android:name="android.permission.BLUETOOTH" />
-  <uses-permission android:name="android.permission.CALL_PHONE" />
-  <uses-permission android:name="android.permission.CAMERA" />
-  <uses-permission android:name="android.permission.INTERNET" />
-  <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
-  <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-  <uses-permission android:name="android.permission.PROCESS_OUTGOING_CALLS" />
-  <uses-permission android:name="android.permission.READ_CALL_LOG" />
-  <uses-permission android:name="android.permission.READ_CONTACTS" />
-  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-  <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-  <uses-permission android:name="android.permission.RECORD_AUDIO" />
-  <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-  <uses-permission android:name="android.permission.VIBRATE" />
-  <uses-permission android:name="android.permission.WAKE_LOCK" />
-  <uses-permission android:name="android.permission.WRITE_CONTACTS" />
-  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-  <uses-feature android:name="android.hardware.camera" />
-  <uses-feature android:name="android.hardware.camera.autofocus" />
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+  <uses-permission android:name="android.permission.BIND_TELECOM_CONNECTION_SERVICE"/>
+  <uses-permission android:name="android.permission.BLUETOOTH"/>
+  <uses-permission android:name="android.permission.CALL_PHONE"/>
+  <uses-permission android:name="android.permission.CAMERA"/>
+  <uses-permission android:name="android.permission.INTERNET"/>
+  <uses-permission android:name="android.permission.MANAGE_OWN_CALLS"/>
+  <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+  <uses-permission android:name="android.permission.PROCESS_OUTGOING_CALLS"/>
+  <uses-permission android:name="android.permission.READ_CALL_LOG"/>
+  <uses-permission android:name="android.permission.READ_CONTACTS"/>
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+  <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+  <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+  <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+  <uses-permission android:name="android.permission.VIBRATE"/>
+  <uses-permission android:name="android.permission.WAKE_LOCK"/>
+  <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
   <queries>
     <intent>
-      <action android:name="android.intent.action.VIEW" />
-      <category android:name="android.intent.category.BROWSABLE" />
-      <data android:scheme="https" />
+      <action android:name="android.intent.action.VIEW"/>
+      <category android:name="android.intent.category.BROWSABLE"/>
+      <data android:scheme="https"/>
     </intent>
   </queries>
-  <application android:name=".MainApplication" android:label="@string/app_name"
-    android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round"
-    android:allowBackup="true" android:theme="@style/AppTheme">
-    <meta-data android:name="expo.modules.updates.ENABLED" android:value="true" />
-    <meta-data android:name="expo.modules.updates.EXPO_RUNTIME_VERSION"
-      android:value="@string/expo_runtime_version" />
-    <meta-data android:name="expo.modules.updates.EXPO_UPDATES_CHECK_ON_LAUNCH"
-      android:value="ALWAYS" />
-    <meta-data android:name="expo.modules.updates.EXPO_UPDATES_LAUNCH_WAIT_MS" android:value="0" />
-    <meta-data android:name="expo.modules.updates.EXPO_UPDATE_URL"
-      android:value="https://u.expo.dev/e45ae657-936d-415d-84a3-6e52e5847c1a" />
-    <service android:name="com.callmanager.CallManagerConnectionService"
-      android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE"
-        
-      android:exported="true">
+  <application android:name=".MainApplication" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="true" android:theme="@style/AppTheme">
+    <meta-data android:name="expo.modules.updates.ENABLED" android:value="true"/>
+    <meta-data android:name="expo.modules.updates.EXPO_RUNTIME_VERSION" android:value="@string/expo_runtime_version"/>
+    <meta-data android:name="expo.modules.updates.EXPO_UPDATES_CHECK_ON_LAUNCH" android:value="ALWAYS"/>
+    <meta-data android:name="expo.modules.updates.EXPO_UPDATES_LAUNCH_WAIT_MS" android:value="0"/>
+    <meta-data android:name="expo.modules.updates.EXPO_UPDATE_URL" android:value="https://u.expo.dev/e45ae657-936d-415d-84a3-6e52e5847c1a"/>
+    <service android:name=".TeleService" android:permission="android.permission.BIND_INCALL_SERVICE" android:exported="true">
+      <meta-data android:name="android.telecom.IN_CALL_SERVICE_UI" android:value="true"/>
       <intent-filter>
-        <action android:name="android.telecom.ConnectionService" />
+        <action android:name="android.telecom.InCallService"/>
       </intent-filter>
     </service>
-    <activity android:name=".MainActivity"
-      android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode|locale|layoutDirection"
-      android:launchMode="singleTask" android:windowSoftInputMode="adjustResize"
-      android:theme="@style/Theme.App.SplashScreen" android:exported="true"
-      android:screenOrientation="portrait" android:showOnLockScreen="true"
-      android:showWhenLocked="true" android:turnScreenOn="true">
+    <service android:name="com.callmanager.CallManagerConnectionService" android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE" android:enabled="true" android:exported="true">
       <intent-filter>
-        <action android:name="android.intent.action.DIAL" />
-        <category android:name="android.intent.category.DEFAULT" />
+        <action android:name="android.telecom.ConnectionService"/>
+      </intent-filter>
+    </service>
+    <activity android:name=".MainActivity" android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode|locale|layoutDirection" android:launchMode="singleTask" android:windowSoftInputMode="adjustResize" android:theme="@style/Theme.App.SplashScreen" android:exported="true" android:screenOrientation="portrait">
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW"/>
+        <action android:name="android.intent.action.DIAL"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="tel"/>
       </intent-filter>
       <intent-filter>
-        <action android:name="android.intent.action.DIAL" />
-        <category android:name="android.intent.category.DEFAULT" />
-        <data android:scheme="tel" />
+        <action android:name="android.intent.action.DIAL"/>
+        <category android:name="android.intent.category.DEFAULT"/>
       </intent-filter>
       <intent-filter>
-        <action android:name="android.intent.action.DIAL" />
-        <category android:name="android.intent.category.DEFAULT" />
-        <category android:name="android.intent.category.BROWSABLE" />
-        <data android:scheme="tel" />
-      </intent-filter>
-
-      <intent-filter>
-        <action android:name="android.intent.action.VIEW" />
-        <category android:name="android.intent.category.DEFAULT" />
-        <category android:name="android.intent.category.BROWSABLE" />
-        <data android:scheme="tel" />
-      </intent-filter>
-
-
-      <intent-filter>
-        <action android:name="android.intent.action.CALL" />
-        <category android:name="android.intent.category.DEFAULT" />
-        <data android:scheme="tel" />
+        <action android:name="android.intent.action.VIEW"/>
+        <action android:name="android.intent.action.DIAL"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="tel"/>
       </intent-filter>
       <intent-filter>
-        <action android:name="android.intent.action.CALL" />
-        <category android:name="android.intent.category.DEFAULT" />
-        <category android:name="android.intent.category.BROWSABLE" />
-        <data android:scheme="tel" />
+        <action android:name="android.intent.action.DIAL"/>
+        <category android:name="android.intent.category.DEFAULT"/>
       </intent-filter>
       <intent-filter>
-        <action android:name="android.intent.action.MAIN" />
-        <category android:name="android.intent.category.LAUNCHER" />
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
       </intent-filter>
       <intent-filter>
-        <action android:name="android.intent.action.VIEW" />
-        <category android:name="android.intent.category.DEFAULT" />
-        <category android:name="android.intent.category.BROWSABLE" />
-        <data android:scheme="call-cycle" />
-        <data android:scheme="com.riyadelberkawy.callcycle" />
-        <data android:scheme="exp+call-cycle" />
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="call-cycle"/>
+        <data android:scheme="com.riyadelberkawy.callcycle"/>
+        <data android:scheme="exp+call-cycle"/>
       </intent-filter>
     </activity>
-    <activity android:name="com.facebook.react.devsupport.DevSettingsActivity"
-      android:exported="false" />
+    <activity android:name="com.facebook.react.devsupport.DevSettingsActivity" android:exported="false"/>
+    <receiver android:name="one.telefon.tele.TeleBroadcastReceiver" android:enabled="true" android:exported="false"/>
   </application>
 </manifest>

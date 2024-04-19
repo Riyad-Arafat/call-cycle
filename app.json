@@ -13,7 +13,7 @@
     },
     "updates": {
       "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/311aceb2-afda-4131-ba5b-17c75b918514"
+      "url": "https://u.expo.dev/e45ae657-936d-415d-84a3-6e52e5847c1a"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -38,15 +38,15 @@
     "scheme": "call-cycle",
     "extra": {
       "eas": {
-        "projectId": "311aceb2-afda-4131-ba5b-17c75b918514"
+        "projectId": "e45ae657-936d-415d-84a3-6e52e5847c1a"
       }
     },
-    "owner": "riyadelberkawy",
+    "owner": "riyadelberkawy1",
     "plugins": [
       [
         "expo-updates",
         {
-          "username": "riyadelberkawy"
+          "username": "riyadelberkawy1"
         }
       ],
       [

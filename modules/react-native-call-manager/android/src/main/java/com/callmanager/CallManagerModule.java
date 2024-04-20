@@ -73,9 +73,8 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
         ComponentName componentName = new ComponentName(reactContext, CallManagerConnectionService.class);
         this.phoneAccountHandle = new PhoneAccountHandle(componentName, "com.callmanager.callService");
         this.phoneAccount = PhoneAccount.builder(phoneAccountHandle, "CallManager")
-                .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER)
-                .build();
-        
+            .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER | PhoneAccount.CAPABILITY_SELF_MANAGED)
+            .build();
         registerPhoneAccount();
     }
     

@@ -86,7 +86,6 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements A
         }
     }
 
-    
     @ReactMethod
     public void setDefaultDialer(Callback callback) {
         Log.w(LOG, "setDefaultDialer() " + this.mContext.getPackageName());
@@ -104,10 +103,11 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements A
                 // Start the activity and expect a result to be returned to onActivityResult
                 if (mContext.getCurrentActivity() != null) {
                     mContext.getCurrentActivity().startActivityForResult(intent, RC_DEFAULT_PHONE, new Bundle());
-                    myCallback.invoke(true);
+                    // Remove the callback invocation here
                 } else {
                     Log.e(LOG, "Unable to get current activity.");
                     myCallback.invoke(false); // Inform JavaScript that the operation failed
+                    callbackInvoked = true; // Set callbackInvoked to true
                 }
             }
         });

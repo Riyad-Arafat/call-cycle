@@ -206,14 +206,15 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
 
     @ReactMethod
     public void endCall(Promise promise) {
-        try {
-            CallManagerConnectionService.disconnectActiveConnection();
+        Call currentCall = MyInCallService.getCurrentCall();
+        if (currentCall != null) {
+            currentCall.disconnect();
             promise.resolve("Call ended successfully.");
-        } catch (Exception e) {
-            promise.reject("ERROR", "Failed to end call: " + e.getMessage());
+        } else {
+            promise.reject("ERROR", "No active call available.");
         }
-
     }
+    
 
     @ReactMethod
     public void bringAppToForeground() {

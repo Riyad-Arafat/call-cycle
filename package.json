@@ -45,6 +45,7 @@
     "react-dom": "18.2.0",
     "react-i18next": "^14.1.0",
     "react-native": "0.73.6",
+    "react-native-background-timer": "^2.4.1",
     "react-native-call-manager": "link:./modules\\react-native-call-manager",
     "react-native-paper": "^5.12.3",
     "react-native-paper-phone-number-input": "^1.1.4",

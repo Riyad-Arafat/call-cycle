@@ -94,6 +94,18 @@ class CallManagerClass {
       this.subscription = undefined;
     }
   }
+
+  public async endCall(): Promise<void> {
+    CallManager.endCall();
+  }
+
+  public async enableSpeaker(): Promise<void> {
+    CallManager.enableSpeaker();
+  }
+
+  public async disableSpeaker(): Promise<void> {
+    CallManager.disableSpeaker();
+  }
 }
 
 export class ReplaceDialer {

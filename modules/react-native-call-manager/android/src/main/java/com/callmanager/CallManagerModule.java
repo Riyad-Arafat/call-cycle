@@ -73,7 +73,7 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
         ComponentName componentName = new ComponentName(reactContext, CallManagerConnectionService.class);
         this.phoneAccountHandle = new PhoneAccountHandle(componentName, "com.callmanager.callService");
         this.phoneAccount = PhoneAccount.builder(phoneAccountHandle, "CallManager")
-            .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER | PhoneAccount.CAPABILITY_SELF_MANAGED)
+            .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
             .build();
         registerPhoneAccount();
     }
@@ -184,12 +184,51 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
 
     @ReactMethod
     public void rejectCall(Promise promise) {
-        Call currentCall = MyInCallService.getCurrentCall();
-        if (currentCall != null) {
-            currentCall.disconnect();
-            promise.resolve("Call rejected successfully.");
+        try {
+            Call currentCall = MyInCallService.getCurrentCall();
+            if (currentCall != null && currentCall.getState() == Call.STATE_RINGING) {
+                currentCall.reject(false, null);
+                promise.resolve("Call rejected successfully.");
+            } else {
+                promise.reject("ERROR", "No ringing call available.");
+            }
+        } catch (Exception e) {
+            promise.reject("ERROR", "Failed to reject call: " + e.getMessage());
+        }
+   
+    }
+
+    @ReactMethod
+    public void endCall(Promise promise) {
+        try {
+            CallManagerConnectionService.disconnectActiveConnection();
+            promise.resolve("Call ended successfully.");
+        } catch (Exception e) {
+            promise.reject("ERROR", "Failed to end call: " + e.getMessage());
+        }
+
+    }
+
+
+    @ReactMethod
+    public void enableSpeaker(Promise promise) {
+        AudioManager audioManager = (AudioManager) reactContext.getSystemService(Context.AUDIO_SERVICE);
+        if (audioManager != null) {
+            audioManager.setSpeakerphoneOn(true);
+            promise.resolve("Speaker enabled.");
         } else {
-            promise.reject("ERROR", "No active call to reject.");
+            promise.reject("ERROR", "Audio manager not available.");
+        }
+    }
+
+    @ReactMethod
+    public void disableSpeaker(Promise promise) {
+        AudioManager audioManager = (AudioManager) reactContext.getSystemService(Context.AUDIO_SERVICE);
+        if (audioManager != null) {
+            audioManager.setSpeakerphoneOn(false);
+            promise.resolve("Speaker disabled.");
+        } else {
+            promise.reject("ERROR", "Audio manager not available.");
         }
     }
 

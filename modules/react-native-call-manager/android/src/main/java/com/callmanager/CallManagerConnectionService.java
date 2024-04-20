@@ -5,9 +5,11 @@ import android.telecom.ConnectionRequest;
 import android.telecom.ConnectionService;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager; // Add this import
+import android.telecom.DisconnectCause;
 import android.net.Uri;
 
 public class CallManagerConnectionService extends ConnectionService {
+    private static Connection activeConnection; 
 
     @Override
     public Connection onCreateOutgoingConnection(PhoneAccountHandle connectionManagerPhoneAccount, ConnectionRequest request) {
@@ -18,6 +20,16 @@ public class CallManagerConnectionService extends ConnectionService {
                 super.onShowIncomingCallUi();
                 // Show your own UI here if needed.
             }
+
+            @Override
+            public void onDisconnect() {
+                super.onDisconnect();
+                // Call setDisconnected when the call is disconnected
+                this.setDisconnected(new DisconnectCause(DisconnectCause.LOCAL));
+                // Call destroy to clean up the call
+                this.destroy();
+            }
+
         };
         
         connection.setAddress(address, TelecomManager.PRESENTATION_ALLOWED);
@@ -30,7 +42,7 @@ public class CallManagerConnectionService extends ConnectionService {
 
         // This is where you handle the actual connection.
         // You may initiate an outgoing call here with a media session or similar.
-
+        activeConnection = connection;
         return connection;
     }
 
@@ -45,4 +57,18 @@ public class CallManagerConnectionService extends ConnectionService {
         super.onCreateOutgoingConnectionFailed(phoneAccountHandle, request);
         // Handle failure of outgoing connection creation.
     }
+
+
+    public Connection getActiveConnection() {
+        return activeConnection;
+    }
+
+
+    public static void disconnectActiveConnection() {
+        if (activeConnection != null) {
+            activeConnection.onDisconnect();
+        }
+    }
+
+    
 }

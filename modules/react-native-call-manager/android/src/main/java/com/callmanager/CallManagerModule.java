@@ -36,6 +36,12 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.module.annotations.ReactModule;
+import android.app.KeyguardManager;
+import android.os.PowerManager;
+import android.view.WindowManager;
+
+
+import static android.content.Context.POWER_SERVICE;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -208,6 +214,39 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
         }
 
     }
+
+    @ReactMethod
+    public void bringAppToForeground() {
+        PackageManager pm = getReactApplicationContext().getPackageManager();
+        Intent intent = pm.getLaunchIntentForPackage(getReactApplicationContext().getPackageName());
+    
+        if (intent != null) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            getReactApplicationContext().startActivity(intent);
+        }
+    }
+    @ReactMethod
+    public void bringAppToForeground_V2(String PackageName) {
+        PowerManager.WakeLock screenLock = ((PowerManager) getReactApplicationContext().getSystemService(POWER_SERVICE)).newWakeLock(
+                PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP, "TAG");
+        screenLock.acquire();
+
+        screenLock.release();
+        KeyguardManager km = (KeyguardManager) getReactApplicationContext().getSystemService(Context.KEYGUARD_SERVICE);
+        final KeyguardManager.KeyguardLock kl = km.newKeyguardLock("MyKeyguardLock");
+        kl.disableKeyguard();
+
+    //  Intent dialogIntent = new Intent(getReactApplicationContext(), MainActivity.class);
+        Intent dialogIntent = getReactApplicationContext().getPackageManager().getLaunchIntentForPackage(PackageName);
+
+        dialogIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        dialogIntent.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED +
+                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD +
+                //      WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON +
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+        getReactApplicationContext().startActivity(dialogIntent);
+    }
+
 
 
     @ReactMethod

@@ -17,7 +17,7 @@ public class CallManagerConnectionService extends ConnectionService {
         Connection connection = new Connection() {
             @Override
             public void onShowIncomingCallUi() {
-                super.onShowIncomingCallUi();
+                //super.onShowIncomingCallUi();
                 // Show your own UI here if needed.
             }
 

@@ -2,13 +2,13 @@ import React, { useCallback } from "react";
 import { MD2Colors as Colors, IconButton } from "react-native-paper";
 import { Contact } from "@typings/types";
 import useGlobal from "@hooks/useGlobal";
-import SendIntentAndroid from "react-native-send-intent";
 import { getCallPermission } from "@utils/index";
 import { Alert } from "react-native";
 import { useTranslation } from "@hooks/useTranslation";
+import CallManager from "react-native-call-manager";
 
 export const Call = React.memo(({ contact }: { contact: Contact }) => {
-  const { on_opreation: disabled } = useGlobal();
+  const { on_opreation: disabled, setCallInfo } = useGlobal();
   const { t } = useTranslation();
 
   const startCall = useCallback(async () => {
@@ -20,7 +20,12 @@ export const Call = React.memo(({ contact }: { contact: Contact }) => {
           t("You need to allow the app to make calls")
         );
       if (contact.phoneNumbers && contact.phoneNumbers[0].number) {
-        SendIntentAndroid.sendPhoneCall(contact.phoneNumbers[0].number, true);
+        console.log("Calling: ", contact.phoneNumbers[0].number);
+        setCallInfo({
+          name: contact.name,
+          number: contact.phoneNumbers[0].number,
+        });
+        CallManager.makeCall(contact.phoneNumbers[0].number);
       }
     } catch (error) {
       console.log(error);

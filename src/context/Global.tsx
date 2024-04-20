@@ -1,4 +1,9 @@
-import React, { useCallback, useRef, useImperativeHandle } from "react";
+import React, {
+  useCallback,
+  useRef,
+  useImperativeHandle,
+  useEffect,
+} from "react";
 import { Alert, AppState, TouchableOpacity } from "react-native";
 import { Contact } from "../typings/types";
 import * as Contacts from "expo-contacts";
@@ -10,7 +15,6 @@ import {
   setContactsGroups,
   updateGroup as updateGroupAPI,
 } from "../apis";
-import SendIntentAndroid from "react-native-send-intent";
 import { IGroup } from "@typings/group";
 import * as Updates from "expo-updates";
 import { Animated, View } from "react-native";
@@ -18,6 +22,8 @@ import { Drawer as DrawerPaper } from "react-native-paper";
 import { router } from "expo-router";
 import i18next from "i18next";
 import { useTranslation } from "@hooks/useTranslation";
+import OngoingCallScreen from "@screens/OngoingCallScreen";
+import CallManager from "react-native-call-manager";
 
 interface Props {
   contacts: Contact[];
@@ -29,6 +35,8 @@ interface Props {
   toggleMenu: () => void;
   groups_count: number;
   set_groups_count: (count: number) => void;
+  callInfo: { number: string; name: string };
+  setCallInfo: (info: { number: string; name: string }) => void;
 }
 
 export const GlobalContext = React.createContext<Props>({
@@ -41,6 +49,8 @@ export const GlobalContext = React.createContext<Props>({
   toggleMenu: () => {},
   groups_count: 0,
   set_groups_count: () => {},
+  callInfo: { number: "", name: "" },
+  setCallInfo: ({ number, name }) => {},
 });
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -55,6 +65,11 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
   const [appStateVisible, setAppStateVisible] = React.useState(
     appState.current
   );
+
+  const [callInfo, setCallInfo] = React.useState({
+    number: "",
+    name: "",
+  });
 
   const _handelEndOpreation = useCallback((time = 1000) => {
     // wait until the storage is updated and then set on_opreation to false
@@ -138,10 +153,13 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
             !!contact.phoneNumbers[0].number &&
             !contact.disabled
           ) {
-            SendIntentAndroid.sendPhoneCall(
-              contact.phoneNumbers[0].number,
-              true
-            );
+            setCallInfo({
+              number: contact.phoneNumbers[0].number,
+              name: contact.name,
+            });
+
+            console.log("Calling: ", contact.phoneNumbers[0].number);
+            CallManager.makeCall(contact.phoneNumbers[0].number);
             // wait until the app is in the foreground
             await wait(5000);
             // await wait until call is finished
@@ -209,6 +227,29 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
     drawerRef.current?.toggleMenu();
   }, []);
 
+  useEffect(() => {
+    CallManager.onStateChange((event, number) => {
+      console.log("Event: ", event);
+      console.log("Number: ", number);
+      if (event === "Dialing") {
+        setCallInfo({ number: number || "222", name: "" });
+      }
+      if (event === "Disconnected") {
+        setCallInfo({ number: "", name: "" });
+      }
+      if (event === "Incoming") {
+        // if the app in background get it to the top
+        setCallInfo({ number: number || "", name: "" });
+      } else if (event === "Connected") {
+        setCallInfo({ number: number || "", name: "" });
+      }
+    });
+
+    return () => {
+      CallManager.dispose();
+    };
+  }, []);
+
   if (loading || isUpdating)
     return (
       <>
@@ -227,8 +268,12 @@ const GlobalProvider = ({ children }: { children: React.ReactNode }) => {
         toggleMenu,
         groups_count,
         set_groups_count: setGroupsCount,
+        callInfo,
+        setCallInfo,
       }}
     >
+      <OngoingCallScreen />
+
       <Drawer ref={drawerRef}>{children}</Drawer>
     </GlobalContext.Provider>
   );

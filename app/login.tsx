@@ -33,6 +33,7 @@ const Login = () => {
       }
 
       const user = await login(parsedPhoneNumber.number, password);
+      console.log(user);
 
       if (user) {
         await saveUser(user);

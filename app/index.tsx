@@ -1,9 +1,13 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { StyleSheet, ImageBackground } from "react-native";
-import { Text, Button } from "react-native-paper";
+import { Text, Button, TextInput } from "react-native-paper";
 import { useTranslation } from "@hooks/useTranslation";
 import { router } from "expo-router";
 import i18n from "i18next"; // Make sure to import i18n
+
+import CallManager, { ReplaceDialer } from "react-native-call-manager";
+import { getCallPermission } from "@utils/index";
+import OngoingCallScreen from "@screens/OngoingCallScreen";
 
 const WelcomeScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -13,6 +17,25 @@ const WelcomeScreen: React.FC = () => {
     const lng = currentLanguage === "en" ? "ar" : "en";
     i18n.changeLanguage(lng);
   };
+
+  useEffect(() => {
+    getCallPermission();
+    let tReplaceDialer = new ReplaceDialer();
+
+    tReplaceDialer.isDefaultDialer((data) => {
+      if (data) console.log("Is ALREADY default dialer.");
+      else {
+        console.log("Is NOT default dialer, try to set.");
+        tReplaceDialer.setDefaultDialer((data) => {
+          if (data) {
+            console.log("Default dialer sucessfully set.");
+          } else {
+            console.log("Default dialer NOT set");
+          }
+        });
+      }
+    });
+  }, []);
 
   return (
     <ImageBackground

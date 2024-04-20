@@ -77,6 +77,7 @@ class CallManagerClass {
   }
 
   public makeCall(phoneNumber: string): Promise<void> {
+    console.log("makeCall", phoneNumber);
     return CallManager.call(phoneNumber);
   }
   public answerCall(): Promise<void> {
@@ -96,15 +97,19 @@ class CallManagerClass {
   }
 
   public async endCall(): Promise<void> {
-    CallManager.endCall();
+    return await CallManager.endCall();
   }
 
-  public async enableSpeaker(): Promise<void> {
-    CallManager.enableSpeaker();
+  public async toggleSpeaker(): Promise<boolean> {
+    return CallManager.toggleSpeaker();
   }
 
-  public async disableSpeaker(): Promise<void> {
-    CallManager.disableSpeaker();
+  public bringAppToForeground() {
+    return CallManager.bringAppToForeground();
+  }
+
+  public bringAppToForeground_V2(packageName: string) {
+    return CallManager.bringAppToForeground_V2(packageName);
   }
 }
 
@@ -129,7 +134,7 @@ export class ReplaceDialer {
     this.checkNativeModule();
     return NativeModules.ReplaceDialerModule.isDefaultDialer((data) => {
       console.log("isDefaultDialer()", data);
-      cb(data);
+      cb?.(data);
       //if (successful) {
       // }
     });
@@ -140,7 +145,7 @@ export class ReplaceDialer {
     //return NativeModules.ReplaceDialerModule.setDefault();
     return NativeModules.ReplaceDialerModule.setDefaultDialer((data) => {
       console.log("setDefaultDialer", data);
-      cb(data);
+      cb?.(data);
       //if (successful) {
       //}
     });

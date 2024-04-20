@@ -26,10 +26,10 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telecom.VideoProfile;
 import android.telecom.ConnectionRequest;
+import android.telecom.CallAudioState;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
-
 
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -40,16 +40,13 @@ import android.app.KeyguardManager;
 import android.os.PowerManager;
 import android.view.WindowManager;
 
-
 import static android.content.Context.POWER_SERVICE;
 
 import java.util.HashMap;
 import java.util.Map;
 
-
-
 @ReactModule(name = CallManagerModule.NAME)
-public class CallManagerModule extends ReactContextBaseJavaModule   implements Application.ActivityLifecycleCallbacks,
+public class CallManagerModule extends ReactContextBaseJavaModule implements Application.ActivityLifecycleCallbacks,
         CallDetectionPhoneStateListener.PhoneCallStateUpdate {
     public static final String NAME = "CallManager";
     private static final String TAG = "CallManagerModule";
@@ -79,14 +76,14 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
         ComponentName componentName = new ComponentName(reactContext, CallManagerConnectionService.class);
         this.phoneAccountHandle = new PhoneAccountHandle(componentName, "com.callmanager.callService");
         this.phoneAccount = PhoneAccount.builder(phoneAccountHandle, "CallManager")
-            .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
-            .build();
+                .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
+                .build();
         registerPhoneAccount();
     }
-    
-    
+
     private void registerPhoneAccount() {
-        if (ActivityCompat.checkSelfPermission(reactContext, Manifest.permission.MANAGE_OWN_CALLS) == PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(reactContext,
+                Manifest.permission.MANAGE_OWN_CALLS) == PackageManager.PERMISSION_GRANTED) {
             telecomManager.registerPhoneAccount(phoneAccount);
         } else {
             Log.e(TAG, "Permission MANAGE_OWN_CALLS not granted. Cannot register phone account.");
@@ -101,19 +98,22 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
 
     @ReactMethod
     public void call(String phoneNumber, Promise promise) {
-        if (ActivityCompat.checkSelfPermission(getReactApplicationContext(), Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(getReactApplicationContext(),
+                Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
             promise.reject("ERROR", "Permission for CALL_PHONE not granted.");
             return;
         }
 
-        PhoneAccountHandle phoneAccountHandle = new PhoneAccountHandle(new ComponentName(reactContext, CallManagerConnectionService.class), "com.callmanager.callService");
+        PhoneAccountHandle phoneAccountHandle = new PhoneAccountHandle(
+                new ComponentName(reactContext, CallManagerConnectionService.class), "com.callmanager.callService");
         Uri uri = Uri.fromParts("tel", phoneNumber, null);
         Bundle extras = new Bundle();
         extras.putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, false);
         ConnectionRequest request = new ConnectionRequest(phoneAccountHandle, uri, extras);
         try {
             telecomManager.placeCall(uri, extras);
-            if (telecomManager.getDefaultDialerPackage().equals(reactContext.getPackageName())) { // Use getDefaultDialerPackage
+            if (telecomManager.getDefaultDialerPackage().equals(reactContext.getPackageName())) { // Use
+                                                                                                  // getDefaultDialerPackage
                 promise.resolve("Call placed successfully.");
             } else {
                 promise.reject("ERROR", "Not set as default dialer.");
@@ -123,12 +123,12 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
         }
     }
 
-
     @ReactMethod
     public void becomeDefaultDialer(Promise promise) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             RoleManager roleManager = (RoleManager) reactContext.getSystemService(Context.ROLE_SERVICE);
-            if (roleManager.isRoleAvailable(RoleManager.ROLE_DIALER) && !roleManager.isRoleHeld(RoleManager.ROLE_DIALER)) {
+            if (roleManager.isRoleAvailable(RoleManager.ROLE_DIALER)
+                    && !roleManager.isRoleHeld(RoleManager.ROLE_DIALER)) {
                 Intent intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_DIALER);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 getReactApplicationContext().startActivity(intent);
@@ -138,7 +138,7 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
             }
         } else {
             Intent intent = new Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER)
-                .putExtra(TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME, reactContext.getPackageName());
+                    .putExtra(TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME, reactContext.getPackageName());
             if (intent.resolveActivity(reactContext.getPackageManager()) != null) {
                 reactContext.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
                 promise.resolve("Requested default dialer change.");
@@ -159,8 +159,7 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
         }
     }
 
-
-     @ReactMethod
+    @ReactMethod
     public void setMuteOff(Promise promise) {
         ReactApplicationContext context = getContext();
         if (context == null) {
@@ -201,7 +200,7 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
         } catch (Exception e) {
             promise.reject("ERROR", "Failed to reject call: " + e.getMessage());
         }
-   
+
     }
 
     @ReactMethod
@@ -214,22 +213,24 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
             promise.reject("ERROR", "No active call available.");
         }
     }
-    
 
     @ReactMethod
     public void bringAppToForeground() {
         PackageManager pm = getReactApplicationContext().getPackageManager();
         Intent intent = pm.getLaunchIntentForPackage(getReactApplicationContext().getPackageName());
-    
+
         if (intent != null) {
-            intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.addFlags(
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             getReactApplicationContext().startActivity(intent);
         }
     }
+
     @ReactMethod
     public void bringAppToForeground_V2(String PackageName) {
-        PowerManager.WakeLock screenLock = ((PowerManager) getReactApplicationContext().getSystemService(POWER_SERVICE)).newWakeLock(
-                PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP, "TAG");
+        PowerManager.WakeLock screenLock = ((PowerManager) getReactApplicationContext().getSystemService(POWER_SERVICE))
+                .newWakeLock(
+                        PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP, "TAG");
         screenLock.acquire();
 
         screenLock.release();
@@ -237,41 +238,62 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
         final KeyguardManager.KeyguardLock kl = km.newKeyguardLock("MyKeyguardLock");
         kl.disableKeyguard();
 
-    //  Intent dialogIntent = new Intent(getReactApplicationContext(), MainActivity.class);
+        // Intent dialogIntent = new Intent(getReactApplicationContext(),
+        // MainActivity.class);
         Intent dialogIntent = getReactApplicationContext().getPackageManager().getLaunchIntentForPackage(PackageName);
 
         dialogIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         dialogIntent.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED +
                 WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD +
-                //      WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON +
+                // WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON +
                 WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
         getReactApplicationContext().startActivity(dialogIntent);
     }
 
+    @ReactMethod
+    public void toggleSpeaker(Promise promise) {
+        AudioManager audioManager = (AudioManager) getReactApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+        boolean isSpeakerOn = audioManager.isSpeakerphoneOn();
+        int earpiece = CallAudioState.ROUTE_WIRED_OR_EARPIECE;
+        int speaker = CallAudioState.ROUTE_SPEAKER;
 
+        if (android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.P) {
+            MyInCallService.getInstance().setAudioRoute(isSpeakerOn ? earpiece : speaker);
+        } else {
+            audioManager.setSpeakerphoneOn(!isSpeakerOn);
+        }
+        promise.resolve(!isSpeakerOn);
+    }
 
     @ReactMethod
-    public void enableSpeaker(Promise promise) {
-        AudioManager audioManager = (AudioManager) reactContext.getSystemService(Context.AUDIO_SERVICE);
-        if (audioManager != null) {
-            audioManager.setSpeakerphoneOn(true);
-            promise.resolve("Speaker enabled.");
+    public void toggleMute(Promise promise) {
+        AudioManager am = (AudioManager) getReactApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+        boolean isMuted = am.isMicrophoneMute();
+        am.setMicrophoneMute(!isMuted);
+        promise.resolve(!isMuted);
+    }
+
+    @ReactMethod
+    public void holdCall(Promise promise) {
+        Call currentCall = MyInCallService.getCurrentCall();
+        if (currentCall != null) {
+            currentCall.hold();
+            promise.resolve("Call held successfully.");
         } else {
-            promise.reject("ERROR", "Audio manager not available.");
+            promise.reject("ERROR", "No active call available.");
         }
     }
 
     @ReactMethod
-    public void disableSpeaker(Promise promise) {
-        AudioManager audioManager = (AudioManager) reactContext.getSystemService(Context.AUDIO_SERVICE);
-        if (audioManager != null) {
-            audioManager.setSpeakerphoneOn(false);
-            promise.resolve("Speaker disabled.");
+    public void unholdCall(Promise promise) {
+        Call currentCall = MyInCallService.getCurrentCall();
+        if (currentCall != null) {
+            currentCall.unhold();
+            promise.resolve("Call unheld successfully.");
         } else {
-            promise.reject("ERROR", "Audio manager not available.");
+            promise.reject("ERROR", "No active call available.");
         }
     }
-
 
     public ReactApplicationContext getContext() {
         return this.reactContext;
@@ -283,7 +305,7 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
             activity = getCurrentActivity();
             activity.getApplication().registerActivityLifecycleCallbacks(this);
         }
-    
+
         telephonyManager = (TelephonyManager) this.reactContext.getSystemService(
                 Context.TELEPHONY_SERVICE);
         callDetectionPhoneStateListener = new CallDetectionPhoneStateListener(this);
@@ -305,8 +327,7 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
     /**
      * @return a map of constants this module exports to JS. Supports JSON types.
      */
-    public
-    Map<String, Object> getConstants() {
+    public Map<String, Object> getConstants() {
         Map<String, Object> map = new HashMap<String, Object>();
         map.put("Incoming", "Incoming");
         map.put("Offhook", "Offhook");
@@ -320,34 +341,43 @@ public class CallManagerModule extends ReactContextBaseJavaModule   implements A
         jsModule = this.reactContext.getJSModule(CallStateUpdateActionModule.class);
 
         switch (state) {
-            //Hangup
+            // Hangup
             case TelephonyManager.CALL_STATE_IDLE:
-                if(wasAppInOffHook == true) { // if there was an ongoing call and the call state switches to idle, the call must have gotten disconnected
-                    jsModule.callStateUpdated("Disconnected", phoneNumber);
-                } else if(wasAppInRinging == true) { // if the phone was ringing but there was no actual ongoing call, it must have gotten missed
-                    jsModule.callStateUpdated("Missed", phoneNumber);
+                if (wasAppInOffHook) {
+                    if (wasAppInRinging) {
+                        // Call was missed
+                        jsModule.callStateUpdated("Missed", phoneNumber);
+                    } else {
+                        // Call was disconnected
+                        jsModule.callStateUpdated("Disconnected", phoneNumber);
+                    }
                 }
 
-                //reset device state
+                // reset device state
                 wasAppInRinging = false;
                 wasAppInOffHook = false;
                 break;
-            //Outgoing
+            // Outgoing or answered
             case TelephonyManager.CALL_STATE_OFFHOOK:
-                //Device call state: Off-hook. At least one call exists that is dialing, active, or on hold, and no calls are ringing or waiting.
+                if (wasAppInRinging) {
+                    // Call was answered
+                    jsModule.callStateUpdated("Offhook", phoneNumber);
+                } else {
+                    // Call is dialing
+                    jsModule.callStateUpdated("Dialing", phoneNumber);
+                }
                 wasAppInOffHook = true;
-                jsModule.callStateUpdated("Offhook", phoneNumber);
                 break;
-            //Incoming
+            // Incoming
             case TelephonyManager.CALL_STATE_RINGING:
-                // Device call state: Ringing. A new call arrived and is ringing or waiting. In the latter case, another call is already active.
                 wasAppInRinging = true;
                 jsModule.callStateUpdated("Incoming", phoneNumber);
                 break;
         }
     }
 
-    // Other methods as previously defined but refined for better readability and error handling
+    // Other methods as previously defined but refined for better readability and
+    // error handling
 
     @Override
     public void onActivityCreated(Activity activity, Bundle savedInstanceState) {

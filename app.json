@@ -51,6 +51,12 @@
       ],
       [
         "expo-localization"
+      ],
+      [
+        "expo-router",
+        {
+          "root": "./app"
+        }
       ]
     ],
     "runtimeVersion": "1.0.0"

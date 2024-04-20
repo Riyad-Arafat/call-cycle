@@ -58,32 +58,22 @@
     </service>
     <service android:name=".MyInCallService" android:permission="android.permission.BIND_INCALL_SERVICE" android:exported="true" android:enabled="true">
       <meta-data android:name="android.telecom.IN_CALL_SERVICE_UI" android:value="true"/>
+      <meta-data android:name="android.telecom.IN_CALL_SERVICE_RINGING" android:value="true"/>
       <intent-filter>
         <action android:name="android.telecom.InCallService"/>
       </intent-filter>
     </service>
+    <activity android:name=".MyReactActivity" android:label="@string/app_name" android:theme="@style/Theme.AppCompat.Light.NoActionBar" android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode|locale|layoutDirection" android:exported="true"/>
+    <activity android:name="com.callmanager.MyReactActivity" android:label="@string/app_name" android:theme="@style/Theme.AppCompat.Light.NoActionBar" android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode|locale|layoutDirection" android:exported="true"/>
     <activity android:name=".MainActivity" android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode|locale|layoutDirection" android:launchMode="singleTask" android:windowSoftInputMode="adjustResize" android:theme="@style/Theme.App.SplashScreen" android:exported="true" android:screenOrientation="portrait">
       <intent-filter>
-        <action android:name="android.intent.action.VIEW"/>
         <action android:name="android.intent.action.DIAL"/>
         <category android:name="android.intent.category.DEFAULT"/>
-        <category android:name="android.intent.category.BROWSABLE"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.DIAL"/>
+        <category android:name="android.intent.category.DEFAULT"/>
         <data android:scheme="tel"/>
-      </intent-filter>
-      <intent-filter>
-        <action android:name="android.intent.action.DIAL"/>
-        <category android:name="android.intent.category.DEFAULT"/>
-      </intent-filter>
-      <intent-filter>
-        <action android:name="android.intent.action.VIEW"/>
-        <action android:name="android.intent.action.DIAL"/>
-        <category android:name="android.intent.category.DEFAULT"/>
-        <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="tel"/>
-      </intent-filter>
-      <intent-filter>
-        <action android:name="android.intent.action.DIAL"/>
-        <category android:name="android.intent.category.DEFAULT"/>
       </intent-filter>
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
@@ -98,6 +88,7 @@
         <data android:scheme="exp+call-cycle"/>
       </intent-filter>
     </activity>
+    <activity android:name="com.callmanager.CallActivity"/>
     <activity android:name="com.facebook.react.devsupport.DevSettingsActivity" android:exported="false"/>
     <receiver android:name="one.telefon.tele.TeleBroadcastReceiver" android:enabled="true" android:exported="false"/>
   </application>

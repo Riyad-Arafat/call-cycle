@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { DefaultTheme } from "react-native-paper/src/core/theming";
@@ -16,6 +16,9 @@ import { Stack } from "expo-router";
 import { SessionProvider } from "@context/Session";
 import ArTranslation from "@i18n/ar/translation";
 import EnTranslation from "@i18n/en/translation";
+import CallManager from "react-native-call-manager";
+import BackgroundTimer from "react-native-background-timer";
+
 import "intl-pluralrules";
 
 export const theme: ThemeBase & {
@@ -47,6 +50,22 @@ i18n
 
 export default function Layout() {
   const { isLoadingComplete } = useCachedResources();
+
+  useEffect(() => {
+    BackgroundTimer.start();
+    CallManager.onStateChange((event, number) => {
+      console.log("Event: ", event);
+      console.log("Number: ", number);
+      if (event === "Offhook") {
+        console.log("Call started");
+      }
+    });
+
+    return () => {
+      CallManager.dispose();
+      BackgroundTimer.stop();
+    };
+  }, []);
 
   return (
     <SafeAreaProvider

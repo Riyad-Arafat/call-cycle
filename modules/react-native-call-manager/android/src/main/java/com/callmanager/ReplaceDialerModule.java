@@ -24,8 +24,8 @@ import android.telecom.TelecomManager;
 
 public class ReplaceDialerModule extends ReactContextBaseJavaModule implements ActivityEventListener {
     ReactApplicationContext mContext;
-    
-    private static Callback setCallback;
+    private Callback myCallback;
+    private boolean callbackInvoked = false;
 
     private static String LOG = "com.callmanager.ReplaceDialerModule";
 
@@ -70,26 +70,28 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements A
             myCallback.invoke(false);
         }
     }
-    
-        @Override
-    public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
-        if (requestCode == RC_DEFAULT_PHONE) {
-            // Handle the result of ACTION_CHANGE_DEFAULT_DIALER
-            if (resultCode == Activity.RESULT_OK) {
-                // Successfully set as default dialer
-                setCallback.invoke(true);
-            } else {
-                // Failed to set as default dialer
-                setCallback.invoke(false);
+
+    @Override
+    public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent intent) {
+        if (!callbackInvoked) {
+            if (requestCode == RC_DEFAULT_PHONE) {
+                if (resultCode == Activity.RESULT_OK) {
+                    callbackInvoked = true;
+                    myCallback.invoke(true); // Success
+                } else {
+                    callbackInvoked = true;
+                    myCallback.invoke(false); // Failure or cancellation
+                }
             }
         }
     }
 
     
     @ReactMethod
-    public void setDefaultDialer(Callback myCallback) {
+    public void setDefaultDialer(Callback callback) {
         Log.w(LOG, "setDefaultDialer() " + this.mContext.getPackageName());
-        setCallback = myCallback;
+        this.myCallback = callback;
+        this.callbackInvoked = false;
 
         // Create the intent to prompt the user to select the default dialer
         Intent intent = new Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER);
